@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/pstudy/pstudy.iml" filepath="$PROJECT_DIR$/pstudy/pstudy.iml" />
+      <module fileurl="file://$PROJECT_DIR$/sub00/sub00.iml" filepath="$PROJECT_DIR$/sub00/sub00.iml" />
+      <module fileurl="file://$PROJECT_DIR$/subclient/subclient.iml" filepath="$PROJECT_DIR$/subclient/subclient.iml" />
+      <module fileurl="file://$PROJECT_DIR$/subservice/subservice.iml" filepath="$PROJECT_DIR$/subservice/subservice.iml" />
+    </modules>
+  </component>
+</project>

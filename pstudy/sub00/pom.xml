@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.wdy.springcloud</groupId>
+    <artifactId>sub00</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <name>sub00</name>
+    <description>Demo project for Spring Boot</description>
+
+    <parent>
+        <groupId>com.wdy.springcloud</groupId>
+        <artifactId>pstudy</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+        <relativePath>../pstudy/pom.xml</relativePath> <!-- lookup parent from repository -->
+    </parent>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-netflix-eureka-server</artifactId>
+            <version>1.3.4.RELEASE</version>
+        </dependency>
+    </dependencies>
+
+</project>
