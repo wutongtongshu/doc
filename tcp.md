@@ -374,3 +374,7 @@ DESTROYING
 DESTROYED
 
 FAILED
+
+## 2.4 service
+
+service 封装了多个connector和一个container，由于存在多个connector，
