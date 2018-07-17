@@ -1,4 +1,67 @@
-## Kafka
+## kafka源码分析
+
+# 1 核心概念
+
+## 1.1 消息
+
+消息分key和value，均是字节数组，key可以为null，value是净载。key的作用是保证消息路由到指定partion上，生产者可以将消息压缩后在发送给kafka服务器。
+
+##1.2 Topic&ConsumerGroup
+
+Topic这个概念的目的是服务端负载均衡用的，一个消息源产生大量消息，会对Topic所在Broker造成压力。如果在消息发送时只指定topic，那么kafka会自动将消息分发到各 Partion 上，正常情况下同一分区的各Partion是会分配在不同的 broker 上的，这样无论多大的数据量，都可以通过增加 broker和Partion的方式来进行扩展，避免单一broker的性能瓶颈(前提是一个broker使用一台服务器才有效)。也可将消息发送时指定 Partion上
+
+ConsumerGroup这个概念的目的是客户端负载均衡，它与Topic是相对的，一个ConsumerGroup会消费订阅的Topic上的全部信息，不允许遗漏。在同一组中，一个Partion上的消息，有且仅有一个consumer来消费，当consumer增减时，会为各consumer重新分配partion，已达到客户端负载均衡。
+
+各ConsumerGroup独立消费Topic，互不干扰
+
+## 1.3 partion
+
+partion对应Log文件夹，segment对应log文件,log文件名是消息偏移量，并由一个稀疏索引文件加快查找。索引文件在运行时会载入内存，加快查找速度。
+
+## 1.4日志文件策略
+
+根据大小或者时间进行管理
+
+日志内容精简，存储
+
+## 1.5 broker
+
+一个kafka实例，就是一个broker，正常生产环境下，一个broker占用一台服务器，当然，也可以配多个实例（一台服务器多个broker，这样做基本没啥意义，还增加了系统负担，最坏的情况就是所有的partion都在同一个broker上，那也比这个强）。
+
+## 1.6 replica
+
+任何partion都可以有多个副本，分两种，leader副本和follower副本，不同副本一般应放在不同broker上。leader副本负责读写，follower不读写，只从leader上同步数据。
+
+## 1.7 ISR
+
+可用副本，由各partion的leader副本来维护，没赶上或者掉线的副本排除，恢复后重新加入。
+
+## 1.8 HW & LEO
+
+HW已经commit了的消息
+
+LEO各partion的副本的偏移量
+
+## 1.9 leader&follower同步设计思想
+
+分同步和异步，同步可保持数据一致性，延迟。异步，消息丢失，高可用。kafka引入ISR克服此项问题，若延迟过高，则剔除该replica。以保持可用。
+
+## 1.10 cluster和controller
+
+多broker(kafka实例)可做cluster集群，对外提供服务。各cluster会选举出controller。control负责pariton管理，其它broker监听cotroller状态。
+
+# 2 生产者示例
+
+ kafka配置文件
+
+```properties
+broker.id=0 broker的标志，也即kafka实例。跟硬件无关。
+num.partitions=2 配置为两个partion时，若topic名字为test，则自动生成test_0, test_1两个partion，除非手工配置。
+```
+
+
+
+# 网络资料整理
 
 **Kafka**是最初由Linkedin公司开发，是一个分布式、支持分区的（partition）、多副本的（replica），基于zookeeper协调的分布式消息系统，它的最大的特性就是可以实时的处理大量数据以满足各种需求场景：比如基于hadoop的批处理系统、低延迟的实时系统、storm/Spark流式处理引擎，web/nginx日志、访问日志，消息服务等等，用scala语言编写，Linkedin于2010年贡献给了Apache基金会并成为顶级开源 项目。
 
@@ -7,6 +70,8 @@
 消息队列的性能好坏，其文件存储机制设计是衡量一个消息队列服务技术水平和最关键指标之一。下面将从Kafka文件存储机制和物理结构角度，分析Kafka是如何实现高效文件存储，及实际应用效果。
 
 #####  1.1  Kafka的特性
+
+**优点**
 
 - 高吞吐量、低延迟：kafka每秒可以处理几十万条消息，它的延迟最低只有几毫秒，每个topic可以分多个partition, consumer group 对partition进行consume操作。
 - 可扩展性：kafka集群支持热扩展
