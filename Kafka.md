@@ -50,7 +50,7 @@ LEO各partion的副本的偏移量
 
 多broker(kafka实例)可做cluster集群，对外提供服务。各cluster会选举出controller。control负责pariton管理，其它broker监听cotroller状态。
 
-# 2 生产者示例
+# 2 生产者分析
 
  kafka配置文件
 
@@ -58,6 +58,39 @@ LEO各partion的副本的偏移量
 broker.id=0 broker的标志，也即kafka实例。跟硬件无关。
 num.partitions=2 配置为两个partion时，若topic名字为test，则自动生成test_0, test_1两个partion，除非手工配置。
 ```
+
+```sequence
+title:sender线程
+participant Sender
+participant Metadata
+participant RecordAccumulator
+participant NetworkClient
+
+Sender->Metadata:1:fetch()
+Metadata-->Sender:2:Cluster
+Sender->RecordAccumulator:3:ready()
+RecordAccumulator-->Sender:4:ReadyCheckResult
+Sender->Metadata:5:requestUpdate()
+Metadata-->Sender:6:
+Sender->NetworkClient:7:ready()
+NetworkClient-->Sender:8:
+Sender->RecordAccumulator:9:drain()
+RecordAccumulator-->Sender:10:
+Sender->RecordAccumulator:11:abortExpiredBatches()
+RecordAccumulator-->Sender:12:
+Sender->Sender:13:createProduceRequests()
+Sender->NetworkClient:14:send()
+NetworkClient-->Sender:15:
+Sender->NetworkClient:16:poll()
+NetworkClient-->Sender:17:
+
+
+
+```
+
+各步骤详细作用，查看kafka源码剖析，P66
+
+# 3 消费者分析
 
 
 
