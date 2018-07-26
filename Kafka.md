@@ -268,11 +268,15 @@ Example:
 
   **缺点是partition分配由服务端完成，不能进行灵活的partition控制**
 
-- 
+- 将 JoinGroupRequest动作拆分
 
-  
+  ![](https://github.com/wutongtongshu/doc/raw/master/kafka/consumer_rebalance.jpg)
 
-  
+## 3.2 KafkaConsummer
+
+
+
+
 
 # 网络资料整理
 
