@@ -100,7 +100,179 @@ NetworkClient-->Sender:17:
 
 # 3 消费者分析
 
+## 3.1 消费者负载均衡
 
+Consummer Croup Rebalance策略
+
+- 早期完全依赖zookeeper实现，zookeeper会带来羊群效应和脑裂
+
+![](https://github.com/wutongtongshu/doc/raw/master/kafka/zookeeper%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.jpg)
+
+每个 consummer 在 consummers/[group_id]/ids 下和 brokers/ids 下面设置 Watcher。分别监视 Group 中消费者的变化和 kafka broker 的变化。
+
+下面看 kafka 在 zookeeper 的具体实现。
+
+1. topic信息，该节点记录topic分区情况和副本情况
+
+   /brokers/topics/[topic] 节点
+
+   ```
+   Schema:
+   {
+       "version": "版本编号目前固定为数字1",
+       "partitions": 
+       {
+           "partitionId1": [
+               replica所在brokerId列表
+           ],
+           "partitionId2": [
+               replica所在brokerId列表
+           ],
+           .......
+       }
+   }
+   
+   Example:
+   {
+   	"version": 1,
+   	"partitions": 
+   	{
+   		"0": [1, 2],
+   		"1": [2, 1],
+   		"2": [1, 2],
+   	}
+   }
+   ```
+
+   上例中，该topic分为3个partition(0, 1, 2)。并且这三个partition的副本都在 brokerId 为 1 和 2 的 broker 上。
+
+2. partition信息
+
+   /brokers/topics/[topic]/partitions/[0...N]  其中[0..N]表示partition索引号
+
+   /brokers/topics/[topic]/partitions/[partitionId]/state
+
+   ```
+   Schema:
+   {
+   	"controller_epoch": 表示kafka集群中的 controller 选举次数,
+   	"leader": 表示leader的brokerId,
+   	"version": 版本编号默认为1,
+   	"leader_epoch": 该leader选举次数,
+   	"isr": [follow replica brokerId列表]
+   }
+    
+   Example:
+   {
+   	"controller_epoch": 1,
+   	"leader": 2,
+   	"version": 1,
+   	"leader_epoch": 0,
+   	"isr": [2, 1]
+   }
+   ```
+
+3. broker信息
+
+   /brokers/ids/[0...N]  
+
+   ```
+   Schema:
+   {
+   	"jmx_port": jmx端口号,
+   	"timestamp": kafka broker初始启动时的时间戳,
+   	"host": 主机名或ip地址,
+   	"version": 版本编号默认为1,
+   	"port": kafka broker的服务端端口号,由server.properties中参数port确定
+   }
+    
+   Example:
+   {
+   	"jmx_port": 6061,
+   	"timestamp":"1403061899859"
+   	"version": 1,
+   	"host": "192.168.1.148",
+   	"port": 9092
+   }
+   ```
+
+4. controller epoch， 表示 controller  选举次数
+
+   /controller_epoch节点 
+
+   此值为一个数字,kafka集群中第一个broker第一次启动时为1，以后只要集群中center controller中央控制器所在broker变更或挂掉，就会重新选举新的center controller，每次center controller变更controller_epoch值就会 + 1; 
+
+5. controller ，存储center controller中央控制器所在kafka broker的信息 
+
+   ```
+   Schema:
+   {
+   	"version": 版本编号默认为1,
+   	"brokerid": kafka集群中broker唯一编号,
+   	"timestamp": kafka broker中央控制器变更时的时间戳
+   }
+    
+   Example:
+   {
+   	"version": 1,
+   	"brokerid": 3,
+   	"timestamp": "1403061802981"
+   }
+   ```
+
+6. consummer,记录consummer的信息
+
+   /consumers/[groupId]/ids/[consumerIdString] 
+
+```
+Schema:
+{
+	"version": 版本编号默认为1,
+	"subscription": 
+	{ 
+		//订阅topic列表
+		"topic名称": consumer中topic消费者线程数
+	},
+	"pattern": "static",
+	"timestamp": "consumer启动时的时间戳"
+}
+ 
+Example:
+{
+	"version": 1,
+	"subscription": 
+	{
+		"open_platform_opt_push_plus1": 5
+	},
+	"pattern": "static",
+	"timestamp": "1411294187842"
+}
+```
+
+7. consummer owner
+
+   /consumers/[groupId]/owners/[topic]/[partitionId] -> consumerIdString + threadId索引编号 
+
+8. consummer  offset
+
+   /consumers/[groupId]/offsets/[topic]/[partitionId] -> long (offset) 
+
+
+- 使用GroupCoordinator实现Consummer Croup Rebalance
+
+  具体做法是，当消费者加入consummer group或者 GroupCoordinator发生故障转移时，消费者向任一broker发送consummerMetadateRequest请求，请求包含group id信息。broker返回consumemrMetadateResponse信息。告知消费者GroupCoodinator信息。
+
+  消费者获取到GroupCoodinator信息后，就要通过HeartbeatRequest与其保持联系，GroupCoodinator在长时间收不到HeartbeatRequest会认为消费者下线，出发rebalance操作。
+
+  HeartbeatResponse中如果含有illgleGeneration，就表示rebalance操作开始，消费者就要发送JoinGroupRequest操作，GroupCoodinator再根据JoinGroupRequest完成分区分配。
+
+  **缺点是partition分配由服务端完成，不能进行灵活的partition控制**
+
+- 
+
+  
+
+  
 
 # 网络资料整理
 
