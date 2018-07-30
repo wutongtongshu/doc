@@ -1,3 +1,9 @@
 1.先使用Puttygen生成公钥，公钥是放到github上面的
 2.保存的时候，保存对应的私钥，这个私钥是自己用
 3.将生成的私钥导入到Pageant中
+
+
+另外在保存公钥的时候，保存一份openssh私钥，git自己用
+这个的意思就是，公钥是公用的。私钥分开用，都是由
+tortoisegit生成。也可以在tortoisegit中指定客户端用
+ssh.exe，这样tortoisegit啥也不用配置。
