@@ -270,3 +270,16 @@ $$
 
 面向服务的构架，将系统划分为规则同一的组件
 
+# 4 EA使用
+
+## 4.1 配置ODBC数据源
+
+下载32位或者64位odbc驱动，注意这个要根据EA版本来。
+
+https://dev.mysql.com/downloads/connector/odbc/5.1.html
+
+Proposed     建议
+Approved     核准
+Validated    生效
+Mandatory    强制
+Implemented  实现
