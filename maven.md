@@ -69,3 +69,47 @@ mvn install:install-file -DgroupId=com.oracle -DartifactId=ojdbc14 -Dversion=10.
 <package>jar</package>
 ```
 
+# 3 maven生命周期
+
+Maven定义了三套生命周期：clean、default、site，每个生命周期都包含了一些阶段（phase）。三套生命周期相互独立，但各个生命周期中的phase却是有顺序的，且后面的phase依赖于前面的phase。执行某个phase时，其前面的phase会依顺序执行，但不会触发另外两套生命周期中的任何phase。
+
+##3.1 clean生命周期
+
+1. pre-clean    ：执行清理前的工作；
+2. clean    ：清理上一次构建生成的所有文件；
+3. post-clean    ：执行清理后的工作
+
+##3.2 default生命周期
+
+default生命周期是最核心的，它包含了构建项目时真正需要执行的所有步骤。
+
+1. validate 验证工程是否正确，所有需要的资源是否可用。 
+2. initialize
+3. generate-sources
+4. process-sources
+5. generate-resources
+6. process-resources    ：复制和处理资源文件到target目录，准备打包；
+7. compile    ：编译项目的源代码；
+8. process-classes
+9. generate-test-sources
+10. process-test-sources
+11. generate-test-resources
+12. process-test-resources
+13. test-compile    ：编译测试源代码；
+14. process-test-classes
+15. test    ：运行测试代码；
+16. prepare-package
+17. package    ：打包成jar或者war或者其他格式的分发包；
+18. pre-integration-test
+19. integration-test 如有需要，将包处理和发布到一个能够进行集成测试的环境。 
+20. post-integration-test
+21. verify 运行所有检查，验证包是否有效且达到质量标准。 
+22. install    ：将打好的包安装到本地仓库，供其他项目使用；
+23. deploy    ：将打好的包安装到远程仓库，供其他项目使用；
+
+##3.3 site生命周期
+
+1. pre-site
+2. site    ：生成项目的站点文档；
+3. post-site
+4. site-deploy    ：发布生成的站点文档

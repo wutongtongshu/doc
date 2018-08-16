@@ -616,3 +616,22 @@ mysql> select @x;
 
 ## 4.4 定义条件
 
+# 5 流程控制语法
+
+##if语句
+
+```sql
+CREATE DEFINER=`root`@`localhost` PROCEDURE `discounted_price`(normal_price NUMERIC(8,2),
+OUT discount_price NUMERIC(8,2))
+    COMMENT '实验if'
+begin
+	if normal_price > 500 then 
+		set discount_price = normal_price*.8;
+	elseif normal_price > 100 then
+		set discount_price=normal_price*.9;
+	else
+		set discount_price=normal_price;
+	end if;	
+end
+```
+
