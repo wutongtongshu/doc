@@ -28,3 +28,7 @@
 - catalina_base/config/[enginename]/[hostname]/apppath.xml，apppath是应用的入口，应用自用
 - META-INF/context.xml应用自用
 - catalina_base/config/server.xml
+
+# 3 调用链
+
+![](https://github.com/wutongtongshu/doc/raw/master/tomcat/%E8%87%AA%E5%AE%9A%E4%B9%89servlet%E8%B0%83%E7%94%A8%E6%B5%81%E7%A8%8B.png)
