@@ -559,79 +559,27 @@ DECIMAL(M, N) 以字符串存放，占用 M + 2 个字节。M 表示位数，N �
 
 在用命令行时，由于默认的delimiter是 分号 ; ，而 sql 语句的结束标志也是分号。这就导致命令行无法准确判断存储过程的结束位置，一般在使用命令行时都要重新设定delimiter。在脚本中不存在这种情况，不需要delimiter。 
 
-## 4.2 创建存储过程
+## 4.2 定义异常处理
 
 ```sql
-CREATE PROCEDURE sp_name([proc_parameter]) [characteristics……] routine_body
+DECLARE {CONTINUE | EXIT} HANDLER FOR
+{SQLSTATE sqlstate_code| MySQL error code| condition_name}
+handler_actions
 ```
 
-characteristics：创建 procedure 时，可以加一些特殊特性约束
+# 4.3 错误码
 
-routine_body：实现存储过程的语句集合
+SQLSTATE和mysql error code是两套体系，之间由对应关系。SQLSTATE更通用
+
+## 4.4 mysql异常重命名
 
 ```sql
-mysql> delimiter //
-mysql> drop procedure if exists fun;
-    -> create procedure fun()
-    -> begin
-    -> declare var1, var2, var3 int;
-    -> set var1 = 10;
-    -> set var2 = 20, var3 = var1 + var2;
-    -> select var1, var2, var3;
-    -> end //
+DECLARE condition_name CONDITION FOR {SQLSTATE sqlstate_code | MySQL_error_code};
 ```
 
-结果
+## 4.5 singal
 
 ```sql
-mysql> call fun();
-+------+------+------+
-| var1 | var2 | var3 |
-+------+------+------+
-|   10 |   20 |   30 |
-+------+------+------+
-```
-
-## 4.3 临时变量
-
-```sql
-mysql> delimiter //
-mysql> drop procedure if exists fhand;
-    -> create procedure fhand()
-    -> begin
-    -> set @x = 1;
-    -> end //
-```
-
-@x必须放到begin和end中间，否则报错，结果
-
-```sql
-mysql> select @x;
-+------+
-| @x   |
-+------+
-|    1 |
-+------+
-```
-
-## 4.4 定义条件
-
-# 5 流程控制语法
-
-##if语句
-
-```sql
-CREATE DEFINER=`root`@`localhost` PROCEDURE `discounted_price`(normal_price NUMERIC(8,2),
-OUT discount_price NUMERIC(8,2))
-    COMMENT '实验if'
-begin
-	if normal_price > 500 then 
-		set discount_price = normal_price*.8;
-	elseif normal_price > 100 then
-		set discount_price=normal_price*.9;
-	else
-		set discount_price=normal_price;
-	end if;	
-end
+SIGNAL SQLSTATE sqlstate_code|condition_name [SET MESSAGE_TEXT=string_or_variable];
 ```
 
