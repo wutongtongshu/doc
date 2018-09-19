@@ -113,3 +113,58 @@ default生命周期是最核心的，它包含了构建项目时真正需要执�
 2. site    ：生成项目的站点文档；
 3. post-site
 4. site-deploy    ：发布生成的站点文档
+
+# 4 build 标签
+
+```
+<build>
+  <defaultGoal>install</defaultGoal>
+  <directory>${basedir}/target</directory>
+  <finalName>${artifactId}-${version}</finalName>
+  <filters>
+    <filter>filters/filter1.properties</filter>
+  </filters>
+  ...
+</build>
+```
+
+- **defaultGoal**:不指定 goal 是默认用它，指定了用指定的
+- **directory**: 默认 `${basedir}/target`. 源码、测试，配置文件的输出根目录。
+- **finalName**: This is the name of the bundled project when it is finally built (sans the file extension, for example: `my-project-1.0.jar`). It defaults to `${artifactId}-${version}`. The term "finalName" is kind of a misnomer, however, as plugins that build the bundled project have every right to ignore/modify this name (but they usually do not). For example, if the `maven-jar-plugin` is configured to give a jar a `classifier` of `test`, then the actual jar defined above will be built as `my-project-1.0-test.jar`.
+- **filter**: 指定 \${}  起作用的文件，没指定的文件里面的 \${} 不起作用
+
+```
+ <build>
+    <sourceDirectory>${basedir}/src/main/java</sourceDirectory>
+    <scriptSourceDirectory>${basedir}/src/main/scripts</scriptSourceDirectory>
+    <testSourceDirectory>${basedir}/src/test/java</testSourceDirectory>
+    <outputDirectory>${basedir}/target/classes</outputDirectory>  
+    directory指定根，这个指定class文件
+    <testOutputDirectory>${basedir}/target/test-classes</testOutputDirectory>
+    ...
+  </build>
+```
+
+```
+ <build>
+    ...
+    <resources>  源码的配置文件
+      <resource>
+        <targetPath>META-INF/plexus</targetPath>  配置文件输出路径，class目录同级
+        <filtering>false</filtering> 是否将 ${} 替换
+        <directory>${basedir}/src/main/plexus</directory> 配置文件搜索的范围
+        <includes>
+          <include>configuration.xml</include> 在搜索范围中找符合条件的配置文件，不符合条件的配置文件不要
+        </includes>
+        <excludes>
+          <exclude>**/*.properties</exclude> 排除配置文件
+        </excludes>
+      </resource>
+    </resources>
+    <testResources> 测试的配置文件
+      ...
+    </testResources>
+    ...
+  </build>
+```
+

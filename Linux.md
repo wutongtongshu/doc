@@ -87,7 +87,16 @@ df显示系统中的文件系统，注意，有些文件系统并没有存在磁
 
 ### 1.4.3 Debian磁盘VMWare
 
+启动之后，通过 blkid 可以看到 /dev/sr0这个设备，这就是光盘设备，使用挂载命令
 
+```
+创建挂载目录: mkdir /data/cdrom
+将设别文件系统挂载到目录：mount -t iso9660 /dev/sr0 /data/cdrom
+查看/data/cdrom下挂载的文件系统： df /data/cdrom
+卸载挂载点下的设备:umount /data/cdrom
+```
+
+![](https://github.com/wutongtongshu/doc/raw/master/TCP_IP/Debian%E6%8C%82%E8%BD%BD%E5%85%89%E7%9B%98.png)
 
 ## 1.5 关机
 
@@ -116,6 +125,54 @@ shutdown -c 取消前一个关机命令
   init 0：关机
 
   init 6：重启
+
+## 1.7 命令别名
+
+```
+alias ttt="ls -l"
+unalias ttt
+```
+
+##1.8 >&1和 >&2  
+
+在 shell 程式中，最常使用的 FD (file descriptor) 大概有三个, 分别是:
+
+**0 是一个文件描述符，表示标准输入(stdin)**
+**1 是一个文件描述符，表示标准输出(stdout)**
+
+**2 是一个文件描述符，表示标准错误(stderr)**
+
+在标准情况下, 这些FD分别跟如下设备关联: 
+stdin(0): keyboard 键盘输入,并返回在前端 
+stdout(1): monitor 正确返回值 输出到前端 
+stderr(2): monitor 错误返回值 输出到前端
+
+**举例说明吧:**
+
+当前目录只有一个文件 a.txt. 
+[root@redhat box]# ls 
+a.txt 
+[root@redhat box]# ls a.txt b.txt 
+ls: b.txt: No such file or directory 由于没有b.txt这个文件, 于是返回错误值, 这就是所谓的2输出 
+a.txt 而这个就是所谓的1输出
+
+**再接着看:**
+
+## 1.9/bin;/sbin;/usr/bin;/usr/sbin;/usr/local/bin;/usr/local/sbin
+
+上述文件夹都是软件的安装目录：
+
+bin：一般存放系统必须的软件
+
+sbin：一般存放 root 用户需要使用的软件
+
+/usr/bin：非系统必须的，工具类软件
+
+/usr/sbin：root 用户使用的， 管理网络类软件
+
+/usr/local/bin：用户自己装的软件，一般不用对外提供服务的
+
+/usr/local/sbin：root 用户自己装的，一般不用提供对外服务的
 
 # 2. 文件管理
 
@@ -596,12 +653,476 @@ wget http://cn.wordpress.org/wordpress-3.1-zh_CN.zip
 
 ## 4.2 ssh服务
 
+## 4.3 DHCP dynamic host configuration protoca
+
+一般来说，DHCP服务器必须与服务器在同一个网段
+
+- 分配网卡 IP 地址、子网掩码
+- 网络地址（网段第一个地址）、广播地址（网段最后一个地址）
+- 默认网关
+- DNS 服务器地址
+- 引导文件、TFTP服务器地址，用得非常少
+
+DHCP工作流程：
+
+DHCP客户端广播（客户端不知道局域网内谁是DHCP服务器）、linux时间依次递增或过几分钟反复请求。windows系统如果找不到会连续在局域网内广播，但是WIN7以后就不再请求了，会给自己分配一个假的IP。局域网内会可能出现多个 DHCP 服务器，客户端会选择第一个响应 DHCP 服务器。随后客户端发广播消息通知全部DHCP服务器，表示已经选中并且将首次分配的 IP 广播出去，如果证实没有被其它客户端占用，则DHCP正式将IP、掩码、等信息发给客户端。
+
+续租：
+
+租约可能是 7200 s，超过租约。超过一半时间，就会续租请求，直到时间耗完 。重发 DHCP 请求。
 
 
 
+# 5 shell脚本
 
+系统支持的shell在 /etc/shells文件中可以查看，linux默认的 bash 。Linux典藏大系，shell从入门到精通是一本好书
 
+## 5.1 脚本执行
 
+新建立的脚本，一般没有执行权限，可通过三种方式执行。
 
+- 改权限
+- bash 脚本名或者 sh 脚本名，这里 bash 执行使用的是/bin/bash 而 sh执行使用的是 /bin/sh使用的不是同一个shell。sh是bash的子集
+- source 脚本名
+- . 脚本名
 
+区别是，bash , sh 或者./脚本名的方式执行的脚本，会重新开启一个 shell ，不是在当前 shell 中执行，那么脚本呢执行完成之后，脚本中的变量都失效。而 source 和 . 的方式，变量在当前 shell 依然有效。
+
+## 5.2 变量
+
+可以在配置文件中配置 /etc/profile /etc/bash_profile /etc/bashrc等文件
+
+### 5.2.1 用户变量
+
+\# name=value 等于号两边不能有空格
+
+### 5.2.2 环境变量
+
+1. export name=value
+2. declare -x name=value
+3. name-value; export name
+
+### 5.2.3 取消环境变量
+
+unset name
+
+## 5.3 环境配置文件加载
+
+- login shell： 取得 bash 是需要完整的登入操作，就称为 login shell。例如，要在 tty1~tty6 登入，需要输入用户的账号与密码，此时取得的 bash 就称为 login shell
+
+- `non-login shell`：取得 bash 接口的方法不需要登入的操作。例如，①你以 X widow 登入 Linux后，在以 X 图形化接口启动终端机，此时那个终端并没有需要再次输入账号和密码，那个 bash 的环境就称 non-login shell 。② 你原本的 bash 环境下再次下达 bash 这个指令，同样的也没有输入账号和密码，那第二个 bash（子程序）也是 non-login shell。
+
+- 交互式 shell，命令行提示符来输入命令。
+
+- 非交互式shell 
+
+  系统执行脚本时所用，没有命令行提示符。
+
+###5.3.1  系统级
+
+1. /etc/environment: 是系统在登录时读取的第一个文件，该文件设置的是整个系统的环境，只要启动系统就会读取该文件，用于为所有进程设置环境变量。系统使用此文件时并不是执行此文件中的命令，而是根据而是根据 KEY=VALUE 模式的代码，对KEY赋值以 VALUE 因此文件中如果要定义 PATH 环境变量，只需加入一行形如 PATH=$PATH:/xxx/bin 的代码即可（debian 中没找到）
+2. /etc/profile: 此文件是系统登录时执行的第二个文件。 为系统的每个用户设置环境信息，当用户第一次登录时，该文件被执行。并从 /etc/profile.d **目录**的配置文件中搜集 shell 的设置。（/etc/profile可以用于设定针对全系统所有用户的环境变量，环境变量周期是永久性）
+3. /etc/bashrc: 是针对所有用户的 bash 初始化文件，在此中设定的环境变量将应用于所有用户的 shell 中，此文件会在用户每次打开 shell 时执行一次。（即每次新开一个终端，都会执行 /etc/bashrc ）。
+
+### 5.3.2 用户级 
+
+1. ~/.profile: 对应当前登录用户的 profile 文件，用于定制当前用户的个人工作环境(变量是永久性)，每个用户都可使用该文件输入专用于自己使用的 shell 信息,当用户登录时,该文件仅仅执行一次!默认情况下,他设置一些环境变量,执行用户的 .bashrc 文件。**这里是推荐放置个人设置的地方**
+2. ~/.bashrc:该文件包含专用于你的bash shell的bash信息，当登录时以及每次打开新的shell时，该文件被读取。(~/.bashrc只针对当前用户，变量的生命周期是永久的)。不推荐放到这儿，因为每开一个shell，这个文件会读取一次，效率肯定有影响。
+3. ~/.bash_profile、~./bash_login、~/.bash_profile是交互式login 方式进入 bash 运行的，~/.bashrc 是交互式 non-login 方式进入 bash 运行的通常二者设置大致相同，所以通常前者会调用后者
+
+### 5.3.3 执行顺序
+
+```
+1. /etc/profile
+      1.1 /etc/profile.d/*.sh
+      1.2 /etc/profile.d/lang.sh
+      1.3 /etc/sysconfig/i18n
+2. ~/.bash_profile | ~/.bash_login | ~/.profile 只会执行三者中的一个，从左边优先级最高
+3. ~/.bashrc 由步骤 2 中的一个启动
+4. /etc/bashrc
+5. ~/.bash_logout
+```
+
+####/etc/profile
+
+```
+  1 # /etc/profile: system-wide .profile file for the Bourne shell (sh(1))  
+  2 # and Bourne compatible shells (bash(1), ksh(1), ash(1), ...).
+  全部 Bourne 类型的 shell 登陆都会加载这个文件
+  3
+  4 if [ "`id -u`" -eq 0 ]; then
+  5   PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin" 超级用户 path
+  6 else
+  7   PATH="/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games"  普通用户 path
+  8 fi
+  9 export PATH 导出成为全局变量
+ 10 
+ 11 if [ "$PS1" ]; then  如果设置了 PS1 这个变量 
+ 12   if [ "$BASH" ] && [ "$BASH" != "/bin/sh" ]; then 如果设置了 BASH 这个变量，不是 /bin/sh
+ 13     # The file bash.bashrc already sets the default PS1.
+ 14     # PS1='\h:\w\$ '
+ 15     if [ -f /etc/bash.bashrc ]; then  如果bash.bashrc存在，先导入/etc/bash.bashrc
+ 16       . /etc/bash.bashrc
+ 17     fi
+ 18   else
+ 19     if [ "`id -u`" -eq 0 ]; then 没有 BASH PS1 比较简单
+ 20       PS1='# '
+ 21     else
+ 22       PS1='$ '
+ 23     fi
+ 24   fi
+ 25 fi
+```
+
+## 5.4 获取命令结果
+
+- ``运算符
+
+  ls 命令返回 h1  testln.tet，令变量 test1 接收这个返回值
+
+  ```
+  wudeyun@www:~$ ls
+  h1  testln.tet
+  wudeyun@www:~$ test1=`ls`
+  wudeyun@www:~$ echo $test1 
+  h1 testln.tet
+  ```
+
+- \$\(\) 符号
+
+  ```
+  wudeyun@www:~$ test2=$(ls)
+  wudeyun@www:~$ echo $test2
+  h1 testln.tet
+  ```
+
+## 5.5 双引号和单引号括号
+
+双引号和单引号，是为了解决 linux 中的空格问题。单引号和双引号与字符串无关，linux默认类型为字符串，即使不写引号，依然可以识别为字符串。只是，双引号内的 $ 和\`\`符号，是可以生效的，还有特殊字符也是可以生效的，而单引号不管是啥，原样输出。linux中的单括号，双括号，是否具有范围的含义，完全靠使用括号的命令自己来判断，比如echo就把除 \$ 和 \`\`之外的所有符号都看成字符，在 grep 中，"(" 是一个字符，而为了表示范围的意思，则应该使用转义字符，若不表示范围，还是用  “(”
+
+## 5.6 变量作用域
+
+1. 函数内部定义变量，也是全局变量，函数内部变量可以先使用，再定义
+
+   ```
+     1 #! /bin/bash
+     2 
+     3 func()
+     4 {
+     5   echo "$v1"  未定义，这个地方是函数申明
+     6   v1=200
+     7 }
+     8 
+     9 v1=100
+    10 func    函数调用
+    11 echo "$v1"
+   ```
+
+2. 局部变量
+
+   ```
+     1 #! /bin/bash
+     2 
+     3 func()
+     4 {
+     5   echo "global variable v1 is $v1"
+     6   local v1=2
+     7   echo "local variable v1 is $v1"
+     8 }
+     9 
+    10 v1=1
+    11 func
+    12 echo "global variable v1 is $v1"
+   ```
+
+## 5.7 条件测试
+
+字符串条件测试 = 、!= 、-n、-z、['abc' = 'abc'] 
+
+```
+  1 #! /bin/bash
+  2 
+  3 x='abc'
+  4 
+  5 #直接测试是否为空
+  6 echo "empty test"
+  7 test $x
+  8 echo $?
+  9 
+ 10 #不等测试
+ 11 echo "not equal test"
+ 12 test 'abc' != $x
+ 13 echo $?
+ 14 
+ 15 #等号两边有空格，赋值没有
+ 16 echo "equal test"
+ 17 test 'abc' = $x
+ 18 echo $?
+ 19 
+ 20 echo "not empty test"
+ 21 test -n $x
+ 22 echo $?
+```
+
+数字测试 [ ]、eq 、ne、gt、lt、le、ge。注意 [] 前后必须空格 [  12  -eq  12   ]
+
+## 5.8 if else
+
+如果写在一行，要用 ; 隔开。
+
+```shell
+if 语句
+  then 语句
+fi
+```
+
+## 5.9 case
+
+;; 表示 case 结束，前面都部匹配，最终要执行 *）后面的语句
+
+```shell
+case var in
+  condition1)
+  语句
+  ;;
+  condition2)
+  语句
+  ;;
+  condition3)
+  语句
+  ;;
+  *)
+  最终匹配的语句
+ esac
+```
+
+##5.10 数学运算赋值
+
+expr ，注意，运算符号的两边有空格，括号要转义。用的是反引号。下面的数据运算符都不用 \$ 
+
+```shell
+x=`expr 10 - \( 4 - 7 \)`
+```
+
+\$\(\(\...)\) 这个里面随便写
+
+```shell
+x=$(((2+10)/4*20))
+```
+
+\$\[...\] 括号里面随便写
+
+```shell
+x=$[1+(2*5)/6+3*2]
+```
+
+let 
+
+```shell
+ww:~$ let "x = 4"
+```
+
+## 5.11 循环
+
+### 5.11.1 for
+
+- {1..2} 表范围
+
+```shell
+#! /bin/bash
+ 
+for var in {1..2}
+do
+echo "the number is $var"
+done
+```
+
+```shell
+wudeyun@www:~$ bash st10.sh 
+the number is 1
+the number is 2
+```
+
+- {1..20..5} start end step
+
+```shell
+#! /bin/bash
+
+for var in {1..20..5} 
+ do
+   echo "the number is $var"
+ done
+```
+
+```shell
+wudeyun@www:~$ bash st10.sh 
+the number is 1
+the number is 6
+the number is 11
+the number is 16
+```
+
+### 5.11.2 until
+
+```shell
+#! /bin/shell
+
+i=1
+
+until [[ $i -gt 5 ]]
+do
+ let "square = i*i"
+ echo "$i*$i = $square"
+ let "i=i+1"
+done
+```
+
+```shell
+wudeyun@www:~$ bash st11.sh 
+1*1 = 1
+2*2 = 4
+3*3 = 9
+4*4 = 16
+5*5 = 25
+```
+
+### 5.11.3 while
+
+```shell
+#! /bin/shell
+
+i=1
+
+while [[ $i -lt 5 ]]
+do
+  let "square = i * i"
+  echo "$i*$i=$square"
+  let "i = i + 1"
+done
+```
+
+```shell
+wudeyun@www:~$ bash st12.sh 
+1*1=1
+2*2=4
+3*3=9
+4*4=16
+```
+
+## 5.12 函数
+
+### 5.12.1 函数定义
+
+函数要先定义，后调用，否则， linux 会把调用语句看成命令。导致出错
+
+```shell
+function funname(){
+    语句
+}
+
+funname
+```
+
+### 5.12.2 return
+
+跟 exit 作用一样，只能返回 0 - 255
+
+```shell
+#! /bin/bash
+
+sum(){
+  let "z = $1 + $2"
+  return $z
+}
+
+sum 22 4
+echo $?
+```
+
+运行
+
+```shell
+wudeyun@www:~$ bash sum.sh 
+26
+```
+
+### 5.12.3 shift
+
+shift n 会将参数左移 n 个。比如
+
+shift 3 会将 \$4 左移 3 个，变成 \$1 
+
+```shell
+#! /bin/bash
+
+until [ $# -eq 0 ]
+do
+  echo $1
+  shift
+done
+```
+
+### 5.12.4 getopts
+
+```shell
+#! /bin/bash
+
+func(){
+  while getopts "a:b:c" arg
+  do
+    case "$arg" in
+    a)
+      echo "a's argument is $OPTARG"
+      ;;
+    b)
+      echo "b's argument is $OPTARG"
+      ;;
+    c)
+      echo "c's argument is $OPTARG"
+      ;;
+    ?)
+      echo "unkown argument."
+      exit 1
+      ;;
+    esac
+  done
+}
+
+func -a hello -b world -c wudeyun
+```
+
+可以接收 a、b、c 三个参数，但是，只有 后面跟 ： 的参数有 $OPTARG 值，参数 c 后面没有 : ，所以取不到值
+
+```shell
+wudeyun@www:~$ bash funopt.sh 
+a's argument is hello
+b's argument is world
+c's argument is
+```
+
+## 5.13 数组
+
+### 5.13.1定义
+
+array=(v0 v1 v2 v3)
+
+array=([0]=value0 [1]=vlaue1 [2]=value2 ... [n]=valuen)
+
+### 5.13.2使用
+
+${#array[@]} 计数
+
+${array[n]}第 n 个
+
+${array[@]} 全部
+
+### 5.13.3删除数组元素
+
+unset array[n]
+
+unset array
+
+# 6 AWK
+
+awk [option] '{pattern commands}' files
 
