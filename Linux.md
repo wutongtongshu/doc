@@ -51,8 +51,8 @@ Linux中，设备也是文件，所以每个设备都有一个文件名，简称
 ​        每个盘片可分成N个扇区，但是第一块扇区特别重要，它主要记录了两个主要信息，分别是： 
 **主引导分区**（Master Boot Record， MBR）：可以安装引导加载程序的地方，有446bytes; 
 **分区表**（partition table）: 记录整块磁盘分区的状态，有64bytes; 
-        主引导分区（MBR）很重要，因为当系统开机的时候会主动去读取这个区域内容，这样系统才会知道你的程序放在哪里，且该如何开机； 
-        分区表的64bytes中，总共分为**4组**记录区（最多容纳4个分区），每组记录区都记录了该区段的起始和结束的柱面号码，这4个分区被分为主（Primary）或扩展分区（Extended）。 
+​        主引导分区（MBR）很重要，因为当系统开机的时候会主动去读取这个区域内容，这样系统才会知道你的程序放在哪里，且该如何开机； 
+​        分区表的64bytes中，总共分为**4组**记录区（最多容纳4个分区），每组记录区都记录了该区段的起始和结束的柱面号码，这4个分区被分为主（Primary）或扩展分区（Extended）。 
 
 - 其实所谓的“分区”只是针对那64个字节的分区表进行设置； 
 
@@ -174,6 +174,12 @@ sbin：一般存放 root 用户需要使用的软件
 
 /usr/local/sbin：root 用户自己装的，一般不用提供对外服务的
 
+## 1.10 linux目录结构
+
+![](https://github.com/wutongtongshu/doc/raw/master/TCP_IP/linux%E7%9B%AE%E5%BD%95%E7%BB%93%E6%9E%84.png)
+
+
+
 # 2. 文件管理
 
 ## 2.1. 压缩文件
@@ -237,7 +243,7 @@ unzip japan.zip
 
     ```
 wudeyun2:x:1001:1001:test user add function:/home/wudeyun2:/bin/bash
-    ```
+​    ```
 
 useradd的默认值，在/etc/default/useradd和/etc/login.defs共同指定的，前者主要指定基本信息，后面是密码有效期，过期等等。
 
@@ -330,6 +336,374 @@ wudeyun : x : 1000 : ？
 ## 3.9. 普通用户改超级用户
 
 必须到/etc/passwd中将用户的userid改为 0，而如果把Gid改成 0，却能使普通用户变成超级用户
+
+## 4.0 进程管理 ps
+
+Linux是一个多用户，多任务的系统，可以同时运行多个用户的多个程序，就必然会产生很多的进程，而每个进程会有不同的状态。  在下文将对进程的
+
+R、S、D、T、Z、X 六种状态做个说明。
+
+ 
+
+PROCESS STATE CODES
+
+​       Here are the different values that the s, stat and state output specifiers (header "STAT" or "S") will display to describe the state of a process.
+
+​       D    Uninterruptible sleep (usually IO)
+
+​       R    Running or runnable (on run queue)
+
+​       S    Interruptible sleep (waiting for an event to complete)
+
+​       T    Stopped, either by a job control signal or because it is being traced.
+
+​       W    paging (not valid since the 2.6.xx kernel)
+
+​       X    dead (should never be seen)
+
+​       Z    Defunct ("zombie") process, terminated but not
+
+​            reaped by its parent.
+
+ 
+
+​       For BSD formats and when the stat keyword is used,additional characters may be displayed:
+
+​       <    high-priority (not nice to other users)
+
+​       N    low-priority (nice to other users)
+
+​       L    has pages locked into memory (for real-time and custom IO)
+
+​       s    is a session leader
+
+​       l    is multi-threaded (using CLONE_THREAD, like NPTL pthreads do)
+
+​       \+    is in the foreground process group
+
+ 
+
+ 
+
+一. 查看进程的状态
+
+1.1 使用PS命令
+
+[root@localhost]# ps -a -o pid,ppid,stat,command -u oracle
+
+  PID  PPID STAT COMMAND
+
+  637     1 Ss   oracleXEZF (LOCAL=NO)
+
+  729     1 Ss   oracleXEZF (LOCAL=NO)
+
+ 1144  1103 S+   top
+
+ 1230     1 Ss   oracleXEZF (LOCAL=NO)
+
+ 1289  1145 S+   vmstat 10
+
+ 1699     1 Ss   oracleXEZF (LOCAL=NO)
+
+ 1827  1294 R+   ps -a -o pid,ppid,stat,command -u oracle
+
+ 3410     1 Ss   ora_pmon_XEZF
+
+ 3412     1 Ss   ora_psp0_XEZF
+
+ 3414     1 Ss   ora_mman_XEZF
+
+ 3416     1 Ss   ora_dbw0_XEZF
+
+ 3418     1 Ss   ora_lgwr_XEZF
+
+ 3420     1 Ss   ora_ckpt_XEZF
+
+ 3422     1 Ss   ora_smon_XEZF
+
+ 3424     1 Ss   ora_reco_XEZF
+
+ 3426     1 Ss   ora_mmon_XEZF
+
+ 3428     1 Ss   ora_mmnl_XEZF
+
+ 3430     1 Ss   ora_d000_XEZF
+
+ 3432     1 Ss   ora_d001_XEZF
+
+ 3434     1 Ss   ora_s000_XEZF
+
+ 3436     1 Ss   ora_s001_XEZF
+
+ 3438     1 Ss   ora_s002_XEZF
+
+ 3488     1 Ssl  /home/oracle_app/bin/tnslsnr LISTENER -inherit
+
+11167     1 Ss   oracleXEZF (LOCAL=NO)
+
+11423     1 Ss   oracleXEZF (LOCAL=NO)
+
+11425     1 Ss   oracleXEZF (LOCAL=NO)
+
+11429     1 Ss   oracleXEZF (LOCAL=NO)
+
+14867     1 Ss   oracleXEZF (LOCAL=NO)
+
+19323     1 Ss   oracleXEZF (LOCAL=NO)
+
+ 
+
+用ps 的 – l 选项,得到更详细的进程信息：
+
+（1）F(Flag)：一系列数字的和，表示进程的当前状态。这些数字的含义为：
+
+​       00：若单独显示，表示此进程已被终止。
+
+​       01：进程是核心进程的一部分，常驻于系统主存。如：sched，vhand，bdflush。
+
+​       02：Parent is tracing process.
+
+​       04 ：Tracing parent's signal has stopped the process; the parent　is waiting ( ptrace(S)).
+
+​       10：进程在优先级低于或等于25时，进入休眠状态，而且不能用信号唤醒，例如在等待一个inode被创建时。
+
+​       20：进程被装入主存（primary memory）
+
+​       40：进程被锁在主存，在事务完成前不能被置换。
+
+ 
+
+（2） 进程状态：S(state)
+
+​       O：进程正在处理器运行,这个状态从来木见过.
+
+​       S：休眠状态（sleeping）
+
+​       R：等待运行（runable）R Running or runnable (on run queue) 进程处于运行或就绪状态
+
+​       I：空闲状态（idle）
+
+​       Z：僵尸状态（zombie）　　　
+
+​       T：跟踪状态（Traced）
+
+​       B：进程正在等待更多的内存页
+
+​       D:不可中断的深度睡眠，一般由IO引起，同步IO在做读或写操作时，cpu不能做其它事情，只能等待，这时进程处于这种状态，如果程序采用异步IO，这种状态应该就很少见到了
+
+ 
+
+（3）C(cpu usage)：cpu利用率的估算值
+
+ 
+
+ 
+
+1.2 使用Top命令中的S 字段
+
+pid user      pr  ni  virt  res  shr s %cpu %mem    time+  command                                
+
+11423 oracle    16   0  627m 170m 168m R   32  9.0   4110:21 oracle                                
+
+ 3416 oracle    15   0  650m 158m 138m S    0  8.4   0:07.12 oracle                                 
+
+11167 oracle    15   0  626m 151m 149m S    0  8.0 400:20.77 oracle                                
+
+11429 oracle    15   0  626m 148m 147m S    0  7.9 812:05.71 oracle                                
+
+ 3422 oracle    18   0  627m 140m 137m S    0  7.4   1:12.23 oracle                                
+
+ 1230 oracle    15   0  639m 107m  96m S    0  5.7   0:10.00 oracle                                
+
+  637 oracle    15   0  629m  76m  73m S    0  4.0   0:04.31 oracle                     
+
+ 
+
+ 
+
+二.  进程状态说明
+
+2.1  R (task_running) : 可执行状态
+
+​       只有在该状态的进程才可能在CPU上运行。而同一时刻可能有多个进程处于可执行状态，这些进程的task_struct结构（进程控制块）被放入对应CPU的可执行队列中（一个进程最多只能出现在一个CPU的可执行队列中）。进程调度器的任务就是从各个CPU的可执行队列中分别选择一个进程在该CPU上运行。
+
+​       很多操作系统教科书将正在CPU上执行的进程定义为RUNNING状态、而将可执行但是尚未被调度执行的进程定义为READY状态，这两种状态在linux下统一为 TASK_RUNNING状态。
+
+ 
+
+2.2  S (task_interruptible): 可中断的睡眠状态
+
+​       处于这个状态的进程因为等待某某事件的发生（比如等待socket连接、等待信号量），而被挂起。这些进程的task_struct结构被放入对应事件的等待队列中。当这些事件发生时（由外部中断触发、或由其他进程触发），对应的等待队列中的一个或多个进程将被唤醒。
+
+​       通过ps命令我们会看到，一般情况下，进程列表中的绝大多数进程都处于task_interruptible状态（除非机器的负载很高）。毕竟CPU就这么一两个，进程动辄几十上百个，如果不是绝大多数进程都在睡眠，CPU又怎么响应得过来。
+
+ 
+
+2.3  D (task_uninterruptible): 不可中断的睡眠状态
+
+​       与task_interruptible状态类似，进程处于睡眠状态，但是此刻进程是不可中断的。不可中断，指的并不是CPU不响应外部硬件的中断，而是指进程不响应异步信号。
+​       绝大多数情况下，进程处在睡眠状态时，总是应该能够响应异步信号的。但是uninterruptible sleep 状态的进程不接受外来的任何信号，因此无法用kill杀掉这些处于D状态的进程，无论是”kill”, “kill -9″还是”kill -15″，这种情况下，一个可选的方法就是reboot。
+
+ 
+
+​       处于uninterruptible sleep状态的进程通常是在等待IO，比如磁盘IO，网络IO，其他外设IO，如果进程正在等待的IO在较长的时间内都没有响应，那么就被ps看到了，同时也就意味着很有可能有IO出了问题，可能是外设本身出了故障，也可能是比如挂载的远程文件系统已经不可访问了.
+
+ 
+
+​       而task_uninterruptible状态存在的意义就在于，内核的某些处理流程是不能被打断的。如果响应异步信号，程序的执行流程中就会被插入一段用于处理异步信号的流程（这个插入的流程可能只存在于内核态，也可能延伸到用户态），于是原有的流程就被中断了。
+
+​       在进程对某些硬件进行操作时（比如进程调用read系统调用对某个设备文件进行读操作，而read系统调用最终执行到对应设备驱动的代码，并与对应的物理设备进行交互），可能需要使用task_uninterruptible状态对进程进行保护，以避免进程与设备交互的过程被打断，造成设备陷入不可控的状态。这种情况下的task_uninterruptible状态总是非常短暂的，通过ps命令基本上不可能捕捉到。
+
+ 
+
+​       我们通过vmstat 命令中procs下的b 可以来查看是否有处于uninterruptible 状态的进程。 该命令只能显示数量。
+
+ 
+
+​       In computer operating systems terminology, a sleeping process can either be interruptible (woken via signals) or uninterruptible (woken explicitly). An uninterruptible sleep state is a sleep state that cannot handle a signal (such as waiting for disk or network IO (input/output)).
+
+ 
+
+​       When the process is sleeping uninterruptibly, the signal will be noticed when the process returns from the system call or trap.
+
+​       -- 这句是关键。 当处于uninterruptibly sleep 状态时，只有当进程从system 调用返回时，才通知signal。
+
+ 
+
+​       A process which ends up in “D” state for any measurable length of time is trapped in the midst of a system call (usually an I/O operation on a device — thus the initial in the ps output).
+
+ 
+
+​       Such a process cannot be killed — it would risk leaving the kernel in an inconsistent state, leading to a panic. In general you can consider this to be a bug in the device driver that the process is accessing.
+
+ 
+
+2.4  T(task_stopped or task_traced)：暂停状态或跟踪状态
+
+​       向进程发送一个sigstop信号，它就会因响应该信号而进入task_stopped状态（除非该进程本身处于task_uninterruptible状态而不响应信号）。（sigstop与sigkill信号一样，是非常强制的。不允许用户进程通过signal系列的系统调用重新设置对应的信号处理函数。）
+​       向进程发送一个sigcont信号，可以让其从task_stopped状态恢复到task_running状态。
+
+​       当进程正在被跟踪时，它处于task_traced这个特殊的状态。“正在被跟踪”指的是进程暂停下来，等待跟踪它的进程对它进行操作。比如在gdb中对被跟踪的进程下一个断点，进程在断点处停下来的时候就处于task_traced状态。而在其他时候，被跟踪的进程还是处于前面提到的那些状态。
+
+​      
+
+​       对于进程本身来说，task_stopped和task_traced状态很类似，都是表示进程暂停下来。
+​       而task_traced状态相当于在task_stopped之上多了一层保护，处于task_traced状态的进程不能响应sigcont信号而被唤醒。只能等到调试进程通过ptrace系统调用执行ptrace_cont、ptrace_detach等操作（通过ptrace系统调用的参数指定操作），或调试进程退出，被调试的进程才能恢复task_running状态。
+
+ 
+
+ 
+
+2.5 Z (task_dead - exit_zombie)：退出状态，进程成为僵尸进程
+
+​       在Linux进程的状态中，僵尸进程是非常特殊的一种，它是已经结束了的进程，但是没有从进程表中删除。太多了会导致进程表里面条目满了，进而导致系统崩溃，倒是不占用其他系统资源。    
+
+​       它已经放弃了几乎所有内存空间，没有任何可执行代码，也不能被调度，仅仅在进程列表中保留一个位置，记载该进程的退出状态等信息供其他进程收集，除此之外，僵尸进程不再占有任何内存空间。
+
+​      
+
+​       进程在退出的过程中，处于TASK_DEAD状态。在这个退出过程中，进程占有的所有资源将被回收，除了task_struct结构（以及少数资源）以外。于是进程就只剩下task_struct这么个空壳，故称为僵尸。
+
+ 
+
+​       之所以保留task_struct，是因为task_struct里面保存了进程的退出码、以及一些统计信息。而其父进程很可能会关心这些信息。比如在shell中，$?变量就保存了最后一个退出的前台进程的退出码，而这个退出码往往被作为if语句的判断条件。
+​       当然，内核也可以将这些信息保存在别的地方，而将task_struct结构释放掉，以节省一些空间。但是使用task_struct结构更为方便，因为在内核中已经建立了从pid到task_struct查找关系，还有进程间的父子关系。释放掉task_struct，则需要建立一些新的数据结构，以便让父进程找到它的子进程的退出信息。
+
+ 
+
+​       子进程在退出的过程中，内核会给其父进程发送一个信号，通知父进程来“收尸”。 父进程可以通过wait系列的系统调用（如wait4、waitid）来等待某个或某些子进程的退出，并获取它的退出信息。然后wait系列的系统调用会顺便将子进程的尸体（task_struct）也释放掉。
+
+​       这个信号默认是SIGCHLD，但是在通过clone系统调用创建子进程时，可以设置这个信号。
+
+​       如果他的父进程没安装SIGCHLD信号处理函数调用wait或waitpid()等待子进程结束，又没有显式忽略该信号，那么它就一直保持僵尸状态，子进程的尸体（task_struct）也就无法释放掉。
+
+ 
+
+​       如果这时父进程结束了，那么init进程自动会接手这个子进程，为它收尸，它还是能被清除的。但是如果如果父进程是一个循环，不会结束，那么子进程就会一直保持僵尸状态，这就是为什么系统中有时会有很多的僵尸进程。
+
+ 
+
+​       当进程退出的时候，会将它的所有子进程都托管给别的进程（使之成为别的进程的子进程）。托管的进程可能是退出进程所在进程组的下一个进程（如果存在的话），或者是1号进程。所以每个进程、每时每刻都有父进程存在。除非它是1号进程。1号进程，pid为1的进程，又称init进程。
+
+
+linux系统启动后，第一个被创建的用户态进程就是init进程。它有两项使命：
+​       1、执行系统初始化脚本，创建一系列的进程（它们都是init进程的子孙）；
+​       2、在一个死循环中等待其子进程的退出事件，并调用waitid系统调用来完成“收尸”工作；
+
+
+
+​       init进程不会被暂停、也不会被杀死（这是由内核来保证的）。它在等待子进程退出的过程中处于task_interruptible状态，“收尸”过程中则处于task_running状态。
+
+ 
+
+Unix/Linux 处理僵尸进程的方法：
+
+​       找出父进程号，然后kill 父进程，之后子进程（僵尸进程）会被托管到其他进程，如init进程，然后由init进程将子进程的尸体（task_struct）释放掉。
+
+ 
+
+除了通过ps 的状态来查看Zombi进程，还可以用如下命令查看：
+
+[oracle@rac1 ~]$ ps -ef|grep defun
+
+oracle   13526 12825  0 16:48 pts/1    00:00:00 grep defun
+
+oracle   28330 28275  0 May18 ?        00:00:00 [Xsession] <defunct>
+
+
+
+ 
+
+僵尸进程解决办法：
+
+（1）改写父进程，在子进程死后要为它收尸。
+
+​       具体做法是接管SIGCHLD信号。子进程死后，会发送SIGCHLD信号给父进程，父进程收到此信号后，执行 waitpid()函数为子进程收尸。这是基于这样的原理：就算父进程没有调用wait，内核也会向它发送SIGCHLD消息，尽管对的默认处理是忽略，如果想响应这个消息，可以设置一个处理函数。
+
+（2）把父进程杀掉。
+
+​       父进程死后，僵尸进程成为"孤儿进程"，过继给1号进程init，init始终会负责清理僵尸进程．它产生的所有僵尸进程也跟着消失。如：
+
+​       kill -9 `ps -ef | grep "Process Name" | awk '{ print $3 }'`
+​       其中，“Process Name”为处于zombie状态的进程名。
+
+（3）杀父进程不行的话，就尝试用skill -t TTY关闭相应终端，TTY是进程相应的tty号(终端号)。但是，ps可能会查不到特定进程的tty号，这时就需要自己判断了。
+（4）重启系统，这也是最常用到方法之一。
+
+ 
+
+ 
+
+2.6 X (task_dead - exit_dead)：退出状态，进程即将被销毁
+
+​       进程在退出过程中也可能不会保留它的task_struct。比如这个进程是多线程程序中被detach过的进程。或者父进程通过设置sigchld信号的handler为sig_ign，显式的忽略了sigchld信号。（这是posix的规定，尽管子进程的退出信号可以被设置为sigchld以外的其他信号。）
+​       此时，进程将被置于exit_dead退出状态，这意味着接下来的代码立即就会将该进程彻底释放。所以exit_dead状态是非常短暂的，几乎不可能通过ps命令捕捉到。
+
+ 
+
+三. 进程状态变化说明
+
+3.1 进程的初始状态
+
+​       进程是通过fork系列的系统调用（fork、clone、vfork）来创建的，内核（或内核模块）也可以通过kernel_thread函数创建内核进程。这些创建子进程的函数本质上都完成了相同的功能——将调用进程复制一份，得到子进程。（可以通过选项参数来决定各种资源是共享、还是私有。）
+​       那么既然调用进程处于task_running状态（否则，它若不是正在运行，又怎么进行调用？），则子进程默认也处于task_running状态。
+​       另外，在系统调用调用clone和内核函数kernel_thread也接受clone_stopped选项，从而将子进程的初始状态置为 task_stopped。
+
+ 
+
+3.2 进程状态变迁
+
+​       进程自创建以后，状态可能发生一系列的变化，直到进程退出。而尽管进程状态有好几种，但是进程状态的变迁却只有两个方向——从task_running状态变为非task_running状态、或者从非task_running状态变为task_running状态。
+​       也就是说，如果给一个task_interruptible状态的进程发送sigkill信号，这个进程将先被唤醒（进入task_running状态），然后再响应sigkill信号而退出（变为task_dead状态）。并不会从task_interruptible状态直接退出。
+
+​       进程从非task_running状态变为task_running状态，是由别的进程（也可能是中断处理程序）执行唤醒操作来实现的。执行唤醒的进程设置被唤醒进程的状态为task_running，然后将其task_struct结构加入到某个cpu的可执行队列中。于是被唤醒的进程将有机会被调度执行。
+
+ 
+
+而进程从task_running状态变为非task_running状态，则有两种途径：
+​       1、响应信号而进入task_stoped状态、或task_dead状态；
+​       2、执行系统调用主动进入task_interruptible状态（如nanosleep系统调用）、或task_dead状态（如exit系统调用）；或由于执行系统调用需要的资源得不到满足，而进入task_interruptible状态或task_uninterruptible状态（如select系统调用）。
+显然，这两种情况都只能发生在进程正在cpu上执行的情况下。
 
 # 4. 网络管理
 
@@ -1121,6 +1495,208 @@ ${array[@]} 全部
 unset array[n]
 
 unset array
+
+# 6 sed
+
+**1.简介**
+
+sed是非交互式的编辑器。它不会修改文件，除非使用shell重定向来保存结果。默认情况下，所有的输出行都被打印到屏幕上。
+
+sed编辑器逐行处理文件（或输入），并将结果发送到屏幕。具体过程如下：首先sed把当前正在处理的行保存在一个临时缓存区中（也称为模式空间），然后处理临时缓冲区中的行，完成后把该行发送到屏幕上。sed每处理完一行就将其从临时缓冲区删除，然后将下一行读入，进行处理和显示。处理完输入文件的最后一行后，sed便结束运行。sed把每一行都存在临时缓冲区中，对这个副本进行编辑，所以不会修改原文件。
+
+**2.定址**
+
+定址用于决定对哪些行进行编辑。地址的形式可以是数字、正则表达式、或二者的结合。如果没有指定地址，sed将处理输入文件的所有行。
+
+地址是一个数字，则表示行号；是“$"符号，则表示最后一行。例如： 
+
+```
+`sed -n '3p' datafile只打印第三行`
+```
+
+ 只显示指定行范围的文件内容，例如：
+
+\# 只查看文件的第100行到第200行
+sed -n '100,200p' mysql_slow_query.log
+
+地址是逗号分隔的，那么需要处理的地址是这两行之间的范围（包括这两行在内）。范围可以用数字、正则表达式、或二者的组合表示。例如：
+
+```
+`sed '2,5d' datafile#删除第二到第五行sed '/My/,/You/d' datafile#删除包含"My"的行到包含"You"的行之间的行sed '/My/,10d' datafile#删除包含"My"的行到第十行的内容`
+```
+
+**3.命令与选项**
+
+sed命令告诉sed如何处理由地址指定的各输入行，如果没有指定地址则处理所有的输入行。
+
+**3.1 sed命令**
+
+| 命令 | 功能                                                         |
+| ---- | ------------------------------------------------------------ |
+| a\   | 在当前行后添加一行或多行。多行时除最后一行外，每行末尾需用“\”续行 |
+| c\   | 用此符号后的新文本替换当前行中的文本。多行时除最后一行外，每行末尾需用"\"续行 |
+| i\   | 在当前行之前插入文本。多行时除最后一行外，每行末尾需用"\"续行 |
+| d    | 删除行                                                       |
+| h    | 把模式空间里的内容复制到暂存缓冲区                           |
+| H    | 把模式空间里的内容追加到暂存缓冲区                           |
+| g    | 把暂存缓冲区里的内容复制到模式空间，覆盖原有的内容           |
+| G    | 把暂存缓冲区的内容追加到模式空间里，追加在原有内容的后面     |
+| l    | 列出非打印字符                                               |
+| p    | 打印行                                                       |
+| n    | 读入下一输入行，并从下一条命令而不是第一条命令开始对其的处理 |
+| q    | 结束或退出sed                                                |
+| r    | 从文件中读取输入行                                           |
+| !    | 对所选行以外的所有行应用命令                                 |
+| s    | 用一个字符串替换另一个                                       |
+| g    | 在行内进行全局替换                                           |
+|      |                                                              |
+| w    | 将所选的行写入文件                                           |
+| x    | 交换暂存缓冲区与模式空间的内容                               |
+| y    | 将字符替换为另一字符（不能对正则表达式使用y命令）            |
+
+**3.2 sed选项**
+
+| 选项 | 功能                                          |
+| ---- | --------------------------------------------- |
+| -e   | 进行多项编辑，即对输入行应用多条sed命令时使用 |
+| -n   | 取消默认的输出                                |
+| -f   | 指定sed脚本的文件名                           |
+
+**4.退出状态**
+
+sed不向grep一样，不管是否找到指定的模式，它的退出状态都是0。只有当命令存在语法错误时，sed的退出状态才不是0。
+
+**5.正则表达式元字符**
+
+ 与grep一样，sed也支持特殊元字符，来进行模式查找、替换。不同的是，sed使用的正则表达式是括在斜杠线"/"之间的模式。
+
+如果要把正则表达式分隔符"/"改为另一个字符，比如o，只要在这个字符前加一个反斜线，在字符后跟上正则表达式，再跟上这个字符即可。例如：sed -n '\o^Myop' datafile
+
+| 元字符   | 功能                           | 示例                                                         |
+| -------- | ------------------------------ | ------------------------------------------------------------ |
+| ^        | 行首定位符                     | /^my/  匹配所有以my开头的行                                  |
+| $        | 行尾定位符                     | /my$/  匹配所有以my结尾的行                                  |
+| .        | 匹配除换行符以外的单个字符     | /m..y/  匹配包含字母m，后跟两个任意字符，再跟字母y的行       |
+| *        | 匹配零个或多个前导字符         | /my*/  匹配包含字母m,后跟零个或多个y字母的行                 |
+| []       | 匹配指定字符组内的任一字符     | /[Mm]y/  匹配包含My或my的行                                  |
+| [^]      | 匹配不在指定字符组内的任一字符 | /[^Mm]y/  匹配包含y，但y之前的那个字符不是M或m的行           |
+| \(..\)   | 保存已匹配的字符               | 1,20s/\(you\)self/\1r/  标记元字符之间的模式，并将其保存为标签1，之后可以使用\1来引用它。最多可以定义9个标签，从左边开始编号，最左边的是第一个。此例中，对第1到第20行进行处理，you被保存为标签1，如果发现youself，则替换为your。 |
+| &        | 保存查找串以便在替换串中引用   | s/my/**&**/  符号&代表查找串。my将被替换为**my**             |
+| \<       | 词首定位符                     | /\<my/  匹配包含以my开头的单词的行                           |
+| \>       | 词尾定位符                     | /my\>/  匹配包含以my结尾的单词的行                           |
+| x\{m\}   | 连续m个x                       | /9\{5\}/ 匹配包含连续5个9的行                                |
+| x\{m,\}  | 至少m个x                       | /9\{5,\}/  匹配包含至少连续5个9的行                          |
+| x\{m,n\} | 至少m个，但不超过n个x          | /9\{5,7\}/  匹配包含连续5到7个9的行                          |
+
+**6.范例**
+
+**6.1p命令**
+
+命令p用于显示模式空间的内容。默认情况下，sed把输入行打印在屏幕上，选项-n用于取消默认的打印操作。当选项-n和命令p同时出现时,sed可打印选定的内容。
+
+```
+`sed '/my/p' datafile#默认情况下，sed把所有输入行都打印在标准输出上。如果某行匹配模式my，p命令将把该行另外打印一遍。``sed -n '/my/p' datafile#选项-n取消sed默认的打印，p命令把匹配模式my的行打印一遍。`
+```
+
+**6.2 d命令**
+
+命令d用于删除输入行。sed先将输入行从文件复制到模式空间里，然后对该行执行sed命令，最后将模式空间里的内容显示在屏幕上。如果发出的是命令d，当前模式空间里的输入行会被删除，不被显示。
+
+```
+`sed '$d' datafile#删除最后一行，其余的都被显示sed '/my/d' datafile#删除包含my的行，其余的都被显示`
+```
+
+**6.3 s命令**
+
+```
+`sed 's/^My/You/g' datafile#命令末端的g表示在行内进行全局替换，也就是说如果某行出现多个My，所有的My都被替换为You。sed -n '1,20s/My$/You/gp' datafile#取消默认输出，处理1到20行里匹配以My结尾的行，把行内所有的My替换为You，并打印到屏幕上。`
+```
+
+```
+`sed 's#My#Your#g' datafile#紧跟在s命令后的字符就是查找串和替换串之间的分隔符。分隔符默认为正斜杠，但可以改变。无论什么字符（换行符、反斜线除外），只要紧跟s命令，就成了新的串分隔符。`
+```
+
+**6.4 e选项**
+
+-e是编辑命令，用于sed执行多个编辑任务的情况下。在下一行开始编辑前，所有的编辑动作将应用到模式缓冲区中的行上。
+
+```
+`sed -e '1,10d' -e 's/My/Your/g' datafile``#选项-e用于进行多重编辑。第一重编辑删除第1-3行。第二重编辑将出现的所有My替换为Your。因为是逐行进行这两项编辑（即这两个命令都在模式空间的当前行上执行），所以编辑命令的顺序会影响结果。`
+```
+
+**6.5 r命令**
+
+r命令是读命令。sed使用该命令将一个文本文件中的内容加到当前文件的特定位置上。
+
+```
+`sed '/My/r introduce.txt' datafile#如果在文件datafile的某一行匹配到模式My，就在该行后读入文件introduce.txt的内容。如果出现My的行不止一行，则在出现My的各行后都读入introduce.txt文件的内容。`
+```
+
+**6.6 w命令**
+
+```
+`sed -n '/hrwang/w me.txt' datafile`
+```
+
+**6.7 a\ 命令**
+
+a\ 命令是追加命令，追加将添加新文本到文件中当前行（即读入模式缓冲区中的行）的后面。所追加的文本行位于sed命令的下方另起一行。如果要追加的内容超过一行，则每一行都必须以反斜线结束，最后一行除外。最后一行将以引号和文件名结束。
+
+```
+`sed '/^hrwang/a\>hrwang and mjfan are husband\>and wife' datafile#如果在datafile文件中发现匹配以hrwang开头的行，则在该行下面追加hrwang and mjfan are husband and wife` 
+```
+
+**6.8 i\ 命令**
+
+i\ 命令是在当前行的前面插入新的文本。
+
+**6.9 c\ 命令**
+
+sed使用该命令将已有文本修改成新的文本。
+
+**6.10 n命令**
+
+sed使用该命令获取输入文件的下一行，并将其读入到模式缓冲区中，任何sed命令都将应用到匹配行紧接着的下一行上。
+
+```
+`sed '/hrwang/{n;s/My/Your/;}' datafile`
+```
+
+注：如果需要使用多条命令，或者需要在某个地址范围内嵌套地址，就必须用花括号将命令括起来，每行只写一条命令，或这用分号分割同一行中的多条命令。
+
+**6.11 y命令**
+
+该命令与UNIX/Linux中的tr命令类似，字符按照一对一的方式从左到右进行转换。例如，y/abc/ABC/将把所有小写的a转换成A，小写的b转换成B，小写的c转换成C。
+
+```
+`sed '1,20y/hrwang12/HRWANG^$/' datafile#将1到20行内，所有的小写hrwang转换成大写，将1转换成^,将2转换成$。#正则表达式元字符对y命令不起作用。与s命令的分隔符一样，斜线可以被替换成其它的字符。`
+```
+
+**6.12 q命令**
+
+q命令将导致sed程序退出，不再进行其它的处理。
+
+```
+`sed '/hrwang/{s/hrwang/HRWANG/;q;}' datafile`
+```
+
+**6.13 h命令和g命令**
+
+```
+`#cat datafile``My name is hrwang.``Your name is mjfan.``hrwang is mjfan's husband.``mjfan is hrwang's wife.`` ` `sed -e '/hrwang/h' -e '$G' datafile``sed -e '/hrwang/H' -e '$G' datafile``#通过上面两条命令，你会发现h会把原来暂存缓冲区的内容清除，只保存最近一次执行h时保存进去的模式空间的内容。而H命令则把每次匹配hrwnag的行都追加保存在暂存缓冲区。``sed -e '/hrwang/H' -e '$g' datafile``sed -e '/hrwang/H' -e '$G' datafile``#通过上面两条命令，你会发现g把暂存缓冲区中的内容替换掉了模式空间中当前行的内容，此处即替换了最后一行。而G命令则把暂存缓冲区的内容追加到了模式空间的当前行后。此处即追加到了末尾。`
+```
+
+**7. sed脚本**
+
+sed脚本就是写在文件中的一列sed命令。脚本中，要求命令的末尾不能有任何多余的空格或文本。如果在一行中有多个命令，要用分号分隔。执行脚本时，sed先将输入文件中第一行复制到模式缓冲区，然后对其执行脚本中所有的命令。每一行处理完毕后，sed再复制文件中下一行到模式缓冲区，对其执行脚本中所有命令。使用sed脚本时，不再用引号来确保sed命令不被shell解释。例如sed脚本script：
+
+```
+`#handle datafile3i\~~~~~~~~~~~~~~~~~~~~~3,$s/\(hrwang\) is`` \(mjfan\)/\2 is \1/``$a\We will love eachother forever！！`` ` 
+```
+
+```
+`#sed -f script datafileMy name is hrwangYour name is mjfan~~~~~~~~~~~~~~~~~~~~~mjfan is hrwang's husband.          ＃啦啦～～～mjfan is hrwang's wife.We will love eachother forever！！`
+```
 
 # 6 AWK
 

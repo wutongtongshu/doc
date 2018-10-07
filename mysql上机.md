@@ -542,3 +542,51 @@ create procedure sp_add_location(in_location varchar(30),in_address1 varchar(30)
 
 # 3.11 signal
 
+# 4 经典案例
+
+##4.1 目录树递归
+
+```sql
+drop table if exists tree;
+CREATE TABLE `tree` (
+  `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `parent_id` int(11) NOT NULL,
+  `name` varchar(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=utf8;
+
+insert into tree(id,parent_id,name) values 
+('1','0','根节点'),
+('2','1','一级节点'),
+('3','1','一级节点'),
+('4','1','一级节点'),
+('5','3','二级节点'),
+('6','4','二级节点'),
+('7','2','二级节点'),
+('8','5','三级节点'),
+('9','5','三级节点'),
+('10','5','三级节点'),
+('11','6','三级节点'),
+('12','11','四级节点'),
+('13','10','四级节点');
+
+drop FUNCTION if EXISTS getChildLst;
+CREATE FUNCTION `getChildLst`(rootId INT) 
+    RETURNS varchar(1000) 
+    BEGIN 
+        DECLARE sTemp VARCHAR(1000); 
+        DECLARE sTempChd VARCHAR(1000); 
+ 
+        SET sTemp = '^'; 
+        SET sTempChd =cast(rootId as CHAR); 
+ 
+        WHILE sTempChd is not null DO 
+            SET sTemp = concat(sTemp,',',sTempChd); 
+            SELECT group_concat(id) INTO sTempChd FROM tree where            FIND_IN_SET(parent_id,sTempChd)>0; 
+        END WHILE; 
+        RETURN sTemp; 
+END  ;
+
+select * from tree where FIND_IN_SET(id, getChildLst(1));
+```
+
