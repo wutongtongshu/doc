@@ -832,44 +832,30 @@ test:c.h
 我们依次输入以下命令：
 
 ```shell
-touch file.txt
+$ls
+a.h  b.h  c.h  d.h  file.txt  Makefile  test
+$touch b.h
+$touch d.h
+$make
+this is c.h
 touch test
-make
 ```
 
-命令行结果如下：
+查看 file.txt 内容，发现内容变为
 
-```shell
-make: Nothing to be done for `all'.
+```makefile
+test.txt:d.h
 ```
 
-分析一下该结果的产生过程：首先include命令先把file.txt 文件包含进Makefile文件
+分析原因，include 命令包含了`file.txt`文件，故 include 命令会检查以`file.txt`为目标的全部规则。由于 `b.h` 比`file.txt`新，导致 `file.txt:b.h` 这条规则起作用，使得`file.txt`内容被更新。include 会将更新了的`file.txt`文件重新加到`Makefile`文件中，最终包含到 `Makefile`中的内容是`test.txt:d.h`，include 命令执行完毕。接着执行 all 目标的规则，由于更新了`d.h`，所以 test 目标要被更新，根据自下而上的执行规则，
 
-file.txt:a.h 和 file.txt:b.h
+```makefile
+	test:c.h
+	@echo "this is c.h"
+	touch test
+```
 
-都不能使file.txt文件发生更新，include命令在包含一次file.txt文件后执行结束。Makefile接着去执行all目标的规则，由于all依赖于test并且test文件比c.h文件新，所以会出现命令行所示的结果。
+这条规则要被执行，输出如上。
 
-首先include命令先把file.dep文件**\*包含***进Makefile文件，包含进Makefile文件的内容为file.dep:a.h。然后，在集合U中检查是否有能使得file.dep文件发生更新的规则，此时，规则
+### 4.3.4 例四
 
-file.dep:a.h
-
-不能使file.dep文件发生更新，但是规则
-
-file.dep:b.h
-​    @echo "test:d.h" > file.dep;
-
-却可以使file.dep文件发生更新，所以include命令会将更新后的file.dep文件再次**\*包含***进Makefile文件，而更新后的file.dep文件的内容也变为test:d.h。然后继续在U中检查是否有规则能使file.dep文件发生更新，此时U中以file.dep为目标的规则只有
-
-file.dep:b.h
-​    @echo "test:d.h" > file.dep;
-
-并且此时的file.dep比b.h新，所以该规则中的命令不会被执行且该规则也不能使file.dep文件发生更新，include命令到此执行结束，最终包含在Makefile文件的内容为test:d.h。
-
-　　接下来就是去执行all目标的规则了，all依赖于test，此时Makefile文件中有两条以test为目标的规则：
-
-test:d.h和
-
-test:c.h
-​    touch test;
-
-此时test比c.h新，而d.h比test新，根据文件的新旧关系以及实验一可知，最后会输出“touch test;”，并且该命令的执行是由依赖关系test:d.h触发的。

@@ -1698,7 +1698,13 @@ sed脚本就是写在文件中的一列sed命令。脚本中，要求命令的�
 `#sed -f script datafileMy name is hrwangYour name is mjfan~~~~~~~~~~~~~~~~~~~~~mjfan is hrwang's husband.          ＃啦啦～～～mjfan is hrwang's wife.We will love eachother forever！！`
 ```
 
-# 6 AWK
+# 7 AWK
 
 awk [option] '{pattern commands}' files
+
+# 8 Unix环境高级编程
+
+## 8.1 系统调用
+
+调用内核的接口被称为系统调用，内核控制计算机硬件资源
 
