@@ -1,3 +1,13 @@
+# 0 常用
+
+## 0.1 POSIX
+
+**POSIX**：表示[可移植操作系统接口](https://baike.baidu.com/item/%E5%8F%AF%E7%A7%BB%E6%A4%8D%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E6%8E%A5%E5%8F%A3/12718298)（Portable Operating System Interface of UNIX，缩写为 POSIX ）
+
+**POSIX标准**：定义了操作系统应该为应用程序提供的接口标准，为要在各种UNIX操作系统上运行的**软件**而定义的一系列API标准的总称，是 IEEE 组织制定了它，其正式称呼为IEEE 1003，而国际标准名称为ISO/IEC 9945。
+
+Windows 系统不能直接支持新版POSIX接口，仅支持第一版标准。故 Windows 系统不能直接创建 **符合POSIX接口标准** 的线程和窗体、套接字。所以微软公司提供POSIX兼容层软件包（Windows Services for UNIX）以支持新版POSIX接口，Windows 系统还可以运行其他POSIX兼容层例如 Cygwin。也就是说，安装了 Cygwin 的 Windows 可以运行基于 POSIX 编写的应用程序。
+
 # 1. 基础
 
 ![Unix体系结构](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/unix%E4%BD%93%E7%B3%BB%E7%BB%93%E6%9E%84.png)
@@ -172,3 +182,41 @@ c. 外围设备的中断
 
 ##1.3 Unix体系
 
+### 1.3.1 Linux文件系统
+
+![虚拟文件系统](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E8%99%9A%E6%8B%9F%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F.png)
+
+虚拟文件系统（VFS）是文件系统的一部分，提供了一个通用的接口抽象，对上提供了诸如 open、close、read 和 write 之类的系统调用。
+
+Linux文件系统层之下是缓冲区缓存，它为文件系统层提供了一个通用函数集（与具体文件系统无关）。这个缓存层通过将数据保留一段时间（或者随即预先读取数据以便在需要是就可用）优化了对物理设备的访问。缓冲区缓存之下是设备驱动程序，它实现了特定物理设备的接口。
+
+Linux文件系统支持多种文件系统格式，如EXT2、 EXT3、 FAT、 FAT32、 VFAT和ISO9660。注意这里的 Linux文件系统指的是 Linux 管理文件的一整套工具，而EXT2、 EXT3、 FAT等只是某一种类型的文件系统，偏重于文件的格式方面，不要混淆。
+
+### 1.3.2 文件种类
+
+Linux下面的文件类型主要有：
+**1) 普通文件**：[C语言](http://lib.csdn.net/base/c)元代码、SHELL脚本、二进制的可执行文件等。分为纯文本和二进制。
+**2) 目录文件**：目录，存储文件的唯一地方。
+**3) 链接文件**：指向同一个文件或目录的的文件。
+**4) 设备文件**：与系统外设相关的，通常在/dev下面。分为块设备和字符设备。
+
+**5）管道(FIFO)文件 :**  提供进程建通信的一种方式
+**6）套接字(socket) 文件：** 该文件类型与网络通信有关
+
+### 1.3.3 挂载
+
+linux系统中每个分区都是一个文件系统，都有自己的目录层次结构。linux会将这些分属不同分区的、单独的文件系统按一定的方式形成一个系统的总的目录层次结构。这里所说的“按一定方式”就是指的挂载。
+
+将一个文件系统的顶层目录挂到另一个文件系统的子目录上，使它们成为一个整体，称为挂载。把该子目录称为挂载点.
+
+### 1.3.4 文件系统管理命令
+
+**磁盘和文件空间 ：**fdisk df du
+
+**文件目录与管理：** cd pwd mkdir rmdir ls cp rm mv
+
+**查看文件内容** cat、tac、more、less、head 、tail
+
+**文件目录与权限 ：**chmod chown chgrp umask
+
+**文件查找：**which、whereis、locate、find、find 
