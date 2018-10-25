@@ -70,7 +70,7 @@ Linux中，设备也是文件，所以每个设备都有一个文件名，简称
   L3: /dev/hda7 
   L4: /dev/hda8 
   L5: /dev/hda9 
-  注意：没有hda3和hda4是因为hda[1-4]留给磁盘默认的四个分区了，这里我们值分出了2个分区P1和P2，所以1、hda3和hda4被空出来，因此逻辑分区名称是直接从hda5开始。 
+  注意：没有hda3和hda4是因为hda[1-4]留给磁盘默认的四个分区了，这里我们值分出了2个分区P1和P2，所以hda3和hda4被空出来，因此逻辑分区名称是直接从hda5开始。 
   2、主分区和扩展分区最多可以有4个（硬盘限制）； 
   3、扩展分区最多只能有1个（操作系统限制）； 
   4、逻辑分区是有扩展分区继续切割出来的分区； 
@@ -97,6 +97,32 @@ df显示系统中的文件系统，注意，有些文件系统并没有存在磁
 ```
 
 ![](https://github.com/wutongtongshu/doc/raw/master/TCP_IP/Debian%E6%8C%82%E8%BD%BD%E5%85%89%E7%9B%98.png)
+
+### 1.4.4 LVM
+
+![逻辑卷构成](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/LVM.png)
+
+PE：LVM 默认使用4MB的PE区块，而LVM的LV最多仅能含有65534个PE (lvm1 的格式)，因此默认的LVM的LV最大容量为4M*65534/(1024M/G)=256G。PE是整个LVM 最小的储存区块，也就是说，其实我们的资料都是由写入PE 来处理的。简单的说，这个PE 就有点像文件系统里面的block 大小。所以调整PE 会影响到LVM 的最大容量！不过，在 CentOS 6.x 以后，由于直接使用 lvm2 的各项格式功能，因此这个限制已经不存在了。
+
+PV：物理卷（physical volume），物理卷就是指硬盘分区或与磁盘分区具有同样功能的设备(如RAID)，与基本的物理存储介质（如分区、磁盘等）相同，多了 LVM 相关的管理参数。
+
+VG：卷组（Volume Group），LVM卷组由一个或多个物理卷组成。
+
+LV：逻辑卷（logical volume），卷组集合提供了一个逻辑存储空间，这个存储空间可以被分成多个部分，每个部分可以被单独命名，称为一个逻辑卷。
+
+LE（logical extent）：逻辑卷也被划分为被称为LE(Logical Extents) 的可被寻址的基本单位。在同一个卷组中，LE的大小和PE是相同的，并且一一对应。存在一个映射。
+
+**注意**：LVM 只是逻辑存储空间，创建文件系统、挂载之后才能使用
+
+```shell
+//创建 ext4 文件系统
+mkfs.ext4 /dev/vggroup/lv
+
+//将文件系统挂载到 /mnt 目录上
+mount -t ext4 /dev/vggroup/lv /mnt
+```
+
+
 
 ## 1.5 关机
 
@@ -1045,6 +1071,118 @@ DHCP客户端广播（客户端不知道局域网内谁是DHCP服务器）、lin
 
 租约可能是 7200 s，超过租约。超过一半时间，就会续租请求，直到时间耗完 。重发 DHCP 请求。
 
+## 4.4 FTP服务器
+
+1. 将安装盘挂载到
+
+   mount  -t  iso9660  -o loop  centos7.iso  /media/cdrom
+
+```shell
+# etc/yum.repos.d 文件夹 CentOS-Media.repo 配置了 yum 源
+baseurl=file:///media/CentOS/
+        file:///media/cdrom/
+        file:///media/cdrecorder/
+```
+
+2. 修改如下两个配置项
+
+```shell
+enable=1
+gpgcheck=0
+```
+
+3. 重建yum缓存，这个必须的，搭建完毕
+
+```shell
+yum clean all
+yum makecache
+```
+
+4. 安装 ftp 服务器端，选择 vsftpd 这款
+
+```shell
+yum install vsftpd
+```
+
+5. 配置ftp权限
+
+　　目前 FTP 服务登陆允许匿名登陆。
+
+　　vsftpd 的配置目录为 /etc/vsftpd，包含下列的配置文件：
+
+- vsftpd.conf 为主要配置文件
+- ftpusers 配置禁止访问 FTP 服务器的用户列表
+- user_list 配置用户访问控制
+
+编辑 /etc/vsftpd/vsftpd.conf并修改
+
+```
+# 禁用匿名用户
+anonymous_enable=NO
+
+# 禁止切换根目录
+chroot_local_user=YES
+```
+
+重新启动 FTP 服务
+
+```
+service vsftpd restart
+```
+
+创建一个ftp用户
+
+```
+useradd ftpuser
+passwd ftpuser
+```
+
+6. 禁止用户通过 shell 登陆。虽然不可以通过 shell 登陆，但是可以通过 ftp 、smba登陆
+
+```
+usermod -s /sbin/nologin ftpuser
+```
+
+7. 为用户分配主目录
+
+`　　　　/data/ftp` 为主目录, 该目录不可上传文件
+
+`　　　　/data/ftp/pub` 文件只能上传到该目录下
+
+```
+mkdir -p /data/ftp/pub
+```
+
+创建登录欢迎文件 ，非必须
+
+```
+echo "Welcome to use FTP service." > /data/ftp/welcome.txt
+```
+
+8. 设置访问权限，这里a-w导致ftpuser这个用户没有写目录权限，也即不能在/data/ftp目录创建子目录。pub 目录是全部权限，可进行各种操作。通过ftp登陆后，默认进入 /data/ftp 这个目录，而这个目录是只读的，所以要求 pub 这个目录必须存在，否则啥也干不了。vsftpd增强了安全检查，如果用户被限定在了其主目录下，则该用户的主目录不能再具有写权限了！如果检查发现还有写权限，就会错误。如果在/data/ftp目录有写权限，加上**allow_writeable_chroot=YES**这个配置项
+
+```
+chmod a-w /data/ftp && chmod 777 -R /data/ftp/pub
+```
+
+9. 设置为用户的主目录：
+
+```
+usermod -d /data/ftp ftpuser
+```
+
+10. 访问FTP
+
+```
+ftp://ftpuser:Password@pub
+```
+
+11. 开机自启动：
+
+```shell
+chkconfig vsftpd on
+```
+
 
 
 # 5 shell脚本
@@ -1148,7 +1286,7 @@ unset name
  25 fi
 ```
 
-## 5.4 获取命令结果
+## 5.4 获取指令（程序运行结果）
 
 - ``运算符
 
@@ -1170,15 +1308,56 @@ unset name
   h1 testln.tet
   ```
 
-## 5.5 双引号和单引号括号
+## 5.5 括号、引号
 
-双引号和单引号，是为了解决 linux 中的空格问题。单引号和双引号与字符串无关，linux默认类型为字符串，即使不写引号，依然可以识别为字符串。只是，双引号内的 $ 和\`\`符号，是可以生效的，还有特殊字符也是可以生效的，而单引号不管是啥，原样输出。linux中的单括号，双括号，是否具有范围的含义，完全靠使用括号的命令自己来判断，比如echo就把除 \$ 和 \`\`之外的所有符号都看成字符，在 grep 中，"(" 是一个字符，而为了表示范围的意思，则应该使用转义字符，若不表示范围，还是用  “(”
+双引号和单引号，是为了解决 linux 中的空格问题。单引号和双引号与字符串无关，linux默认类型为字符串，即使不写引号，依然可以识别为字符串。只是，双引号内的 $ 和\`\`符号，是可以生效的，还有特殊字符也是可以生效的，而单引号不管是啥，原样输出。
+
+<font color=red>\[</font>  ：是 linux 的内建命令，用于测试
+
+- \[ 后要跟个空格，不然识别不了
+- 内部操作符与操作变量之间要有空格：如  [  “a”  =  “b”  ]
+- 字符串比较中 \>  需要写成 \\> 进行转义
+- \[ \]中字符串或者${}变量尽量使用"" 双引号扩住，避免值未定义引用而出错的好办法
+- \[ 中可以使用 –a ! –o 进行逻辑运算
+
+<font color=red>\[\[</font>  ：提供了 <font color=red>\[</font> 功能的扩展，但是它不是 shell 的内建命令，就是说它不是一个程序，只是一个shell关键词
+
+- 字符串比较中，可以直接使用 \> \< 无需转义
+- [\[ 中字符串或者${}变量尽量如未使用"" 双引号扩住的话，会进行模式和元字符匹配
+
+```shell
+[root@localhostkuohao]# [[ "ab" = a* ]] && echo "ok"
+  ok
+```
+
+- \[\[ 内部可以使用 &&  || 进行逻辑运算
+
+```shell
+
+[  exp1  -a exp2  ] = [[  exp1 && exp2 ]] = [  exp1  ]&& [  exp2  ] = [[ exp1  ]] && [[  exp2 ]]
+[  exp1  -o exp2  ] = [[  exp1 || exp2 ]] = [  exp1  ]|| [  exp2  ] = [[ exp1  ]] || [[  exp2 ]]
+
+[root@localhost ~]# if [[ "a" == "a" && 2 -gt1 ]] ;then echo "ok" ;fi
+ok
+[root@localhost ~]# if [[ "a" == "a" ]] && [[2 -gt 1 ]] ;then echo "ok" ;fi
+ok
+[root@localhost ~]# if [[ "a" == "a" ]] || [[ 2 -gt 1]] ;then echo "ok" ;fi
+ok
+[root@localhost ~]# if [[ "a" == "a" ]] || [[ 2 -gt10 ]] ;then echo "ok" ;fi
+ok
+[root@localhost ~]# if [[ "a" == "a"  || 2 -gt 10 ]] ;then echo "ok" ;fi
+ok
+```
+
+- 其他用法都和 \[ 一样
+
+<font color=red>\(\(\)\)</font> ：只要符合 C 中算术运算都可以用
 
 ## 5.6 变量作用域
 
 1. 函数内部定义变量，也是全局变量，函数内部变量可以先使用，再定义
 
-   ```
+   ```shell
      1 #! /bin/bash
      2 
      3 func()
@@ -1211,14 +1390,14 @@ unset name
 
 ## 5.7 条件测试
 
-字符串条件测试 = 、!= 、-n、-z、['abc' = 'abc'] 
+字符串条件测试 = 、!= 、-n、-z、[ 'abc' = 'abc' ] 
 
-```
+```shell
   1 #! /bin/bash
   2 
   3 x='abc'
   4 
-  5 #直接测试是否为空
+  5 #非空测试
   6 echo "empty test"
   7 test $x
   8 echo $?
@@ -1236,9 +1415,12 @@ unset name
  20 echo "not empty test"
  21 test -n $x
  22 echo $?
+ 23 [ "a" = "b" ]; echo $?
 ```
 
-数字测试 [ ]、eq 、ne、gt、lt、le、ge。注意 [] 前后必须空格 [  12  -eq  12   ]
+数字测试 [ ]、eq 、ne、gt、lt、le、ge。无论是字符测试还是数字测试，要想让运算符发挥作用，变量与运算符之间都要留空格，还有各种括号，也算是运算符，都要留空格。我猜在条件测试的时候，linux还是把这些东西都当作字符串来处理了，注意，测试的时候，不能使用数学上的 > 、< 等。
+
+文件测试也一样，
 
 ## 5.8 if else
 
@@ -1272,7 +1454,7 @@ case var in
 
 ##5.10 数学运算赋值
 
-expr ，注意，运算符号的两边有空格，括号要转义。用的是反引号。下面的数据运算符都不用 \$ 
+shell 只会处理文字，所以要让 ()跟数学上的范围统一，必须要转义。\$(())和\$[]是告诉shell我现在进行数学运算
 
 ```shell
 x=`expr 10 - \( 4 - 7 \)`
@@ -1290,10 +1472,10 @@ x=$(((2+10)/4*20))
 x=$[1+(2*5)/6+3*2]
 ```
 
-let 
+let 是赋值用的命令，不用空格
 
 ```shell
-ww:~$ let "x = 4"
+ww:~$ let "x=4"
 ```
 
 ## 5.11 循环
@@ -1336,6 +1518,39 @@ the number is 11
 the number is 16
 ```
 
+- 遍历字符串序列
+
+```shell
+for x in str1 str2 str3
+do
+    echo $x
+done
+```
+
+- 遍历数组
+
+```shell
+array=(1 2 3 4 5 6)
+for x in ${array[@]}
+do
+    echo $x
+done
+
+for x in ${array[*]}
+do
+    echo $x
+done
+```
+
+- 遍历序列，输出 1 到 10
+
+```shell
+for x in `seq 1 10`
+do
+    echo $x
+done
+```
+
 ### 5.11.2 until
 
 ```shell
@@ -1343,7 +1558,7 @@ the number is 16
 
 i=1
 
-until [[ $i -gt 5 ]]
+until [ $i -gt 5 ]
 do
  let "square = i*i"
  echo "$i*$i = $square"
@@ -1367,7 +1582,7 @@ wudeyun@www:~$ bash st11.sh
 
 i=1
 
-while [[ $i -lt 5 ]]
+while [ $i -lt 5 ]
 do
   let "square = i * i"
   echo "$i*$i=$square"
@@ -1496,7 +1711,9 @@ unset array[n]
 
 unset array
 
-# 6 sed
+# 6 文本编辑
+
+## 6.1 sed
 
 **1.简介**
 
@@ -1688,23 +1905,131 @@ q命令将导致sed程序退出，不再进行其它的处理。
 
 **7. sed脚本**
 
-sed脚本就是写在文件中的一列sed命令。脚本中，要求命令的末尾不能有任何多余的空格或文本。如果在一行中有多个命令，要用分号分隔。执行脚本时，sed先将输入文件中第一行复制到模式缓冲区，然后对其执行脚本中所有的命令。每一行处理完毕后，sed再复制文件中下一行到模式缓冲区，对其执行脚本中所有命令。使用sed脚本时，不再用引号来确保sed命令不被shell解释。例如sed脚本script：
+sed脚本就是写在文件中的一列sed命令。脚本中，要求命令的末尾不能有任何多余的空格或文本。如果在一行中有多个命令，要用分号分隔。执行脚本时，sed先将输入文件中第一行复制到模式缓冲区，然后对其执行脚本中所有的命令。每一行处理完毕后，sed再复制文件中下一行到模式缓冲区，对其执行脚本中所有命令。使用sed脚本时，不再用引号来确保sed命令不被shell解释。例如sed脚本script：`
 
-```
-`#handle datafile3i\~~~~~~~~~~~~~~~~~~~~~3,$s/\(hrwang\) is`` \(mjfan\)/\2 is \1/``$a\We will love eachother forever！！`` ` 
+## 6.2 AWK
+
+awk  '<font color=red>pattern   </font> {  <font color=blue>commands</font>}'  files
+
+awk的用法1：
+
+```shell
+`awk `/La/` dataf3       #显示含La的行。`
 ```
 
-```
-`#sed -f script datafileMy name is hrwangYour name is mjfan~~~~~~~~~~~~~~~~~~~~~mjfan is hrwang's husband.          ＃啦啦～～～mjfan is hrwang's wife.We will love eachother forever！！`
+awk的用法2:
+
+```shell
+`awk -F ``":"` `'{print $1,$2}'` `/etc/passwd　　#以“:”为分割,显示/etc/passwd每一行的第1和第2个字段。$1代表第1个字段，$2代表第2个字段，其他类推.`
 ```
 
-# 7 AWK
+awk的用法3：
 
-awk [option] '{pattern commands}' files
+```shell
+`awk ``'/La/{ print $1,$2 }'` `dataf3  #将含有La关键字的数据行的第1及第2个字段显示出来.默认使用空格分割.`
+```
+
+awk的用法4：
+
+```shell
+`awk -F : ``'/^www/{print $3,$4}'` `/etc/passwd  # 使用选项 -F，指定：为分隔符，账号www的uid（第3个字段）及gid（第4个字段）显示出来.`
+```
+
+awk的用法5：
+
+```shell
+`[root@localhost~]# awk -F : ``'/^r/{print $1}'` `/etc/passwd        #显示以r开头的行的第一个字段``root``rpc``rpcuser`
+```
+
+awk的用法6：
+
+```shell
+`[root@localhost~]# awk -F : ``'$3>=500{print $1,$3}'` `/etc/passwd   #找出$3这个字段的id大于等于500的行，并显示1、3列``www 500``cacti 501``nagios 502``vsftpd 503`
+```
+
+awk的用法7：
+
+```shell
+`[root@localhost~]# awk -F : ``'$7~"bash"{print $1,$7}'` `/etc/passwd        #匹配出$7是bash的行，如果为真则打印出来``root /bin/bash``mysql /bin/bash``www /bin/bash``cacti /bin/bash``nagios /bin/bash`
+```
+
+awk的用法8：
+
+```shell
+`[root@localhost~]# awk -F : ``'$7!~"bash"{print $1,$7}'` `/etc/passwd       #取出$7不是bash的行并打印出来``bin /sbin/nologin``daemon /sbin/nologin``adm /sbin/nologin``lp /sbin/nologin``sync /bin/sync``shutdown /sbin/shutdown`
+```
+
+## 6.3 tr 字符替换
+
+1. 不带参数将SET2替换SET1替换，且SET1长度大于SET2
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr 'abc' '12'
+11AA122BB222CC3
+```
+
+<font color=blue>a被替换成1，b被替换成2，c被替换成2</font>
+
+2. 不带参数将SET2替换SET1替换，且SET1长度小于SET2
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr 'ab' '123'
+11AA122BB2ccCC3
+```
+
+<font color=blue>a被替换成1，b被替换成2</font>
+
+3. -t参数
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -t 'abc' '12'
+11AA122BB2ccCC3
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -t 'ab' '123'
+11AA122BB2ccCC3
+```
+
+<font color=blue>都是a被替换成1，b被替换成2</font>
+
+4.删除指定字符,-d
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -d 'a-z' 
+AA1BB2CC3
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -d -c 'a-z\n'  
+aabbcc
+```
+
+注意 -c 的作用是取反\( complement \)的意思
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -d '[:lower:]' 
+AA1BB2CC3
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -d -c '[:lower:]\n'
+aabbcc
+```
+
+5.替换连续字符，-s
+
+```shell
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -s 'a-zA-Z'
+aA1bB2cC3
+[root@localhost ~]# echo "aaAA1bbBB2ccCC3" | tr -s '[:alnum:]\n'
+aA1bB2cC3
+```
+
+上面两种方法都是将重复的多个字符替换成单个字符
+
+6.-c操作 
+
+```shell
+[root@localhost test]# echo "name" |tr -d -c 'a \n'
+a
+```
+
+上述操作是删除标准输入中除“a”，空格 "\n"之外的字符
 
 # 8 Unix环境高级编程
 
 ## 8.1 系统调用
 
 调用内核的接口被称为系统调用，内核控制计算机硬件资源
-

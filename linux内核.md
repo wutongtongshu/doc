@@ -220,3 +220,232 @@ linux系统中每个分区都是一个文件系统，都有自己的目录层次
 **文件目录与权限 ：**chmod chown chgrp umask
 
 **文件查找：**which、whereis、locate、find、find 
+
+# 2 高级系统编程
+
+## 2.1 UNIX 标准之ISO C、IEEE POSIX和Single UNIX Specification
+
+三者的关系是 ISO C是基础，规定了 C 库，大方向； POSIX 增加系统调用标准，相当于ISO的细化和扩展，SUS就更是细化和扩展了，越粗的东西越是基础。
+
+UNIX标准用于保证不同的UNIX系统实现能提供一致的编程环境，从而使得在一个UNIX系统上开发和打包的UNIX程序也可以在其它UNIX系统上运行。UNIX标准涉及ISO C、IEEE POSIX和Single UNIX Specification这三个关系密切的标准。
+
+一、ISO C标准
+C语言是一种在恰当的时间出现的恰当的语言，统治了操作系统编程。 ISO C标准的目的在于提高C程序在不同操作系统之间的移植性，既包括UNIX系统，也包括非UNIX系统。
+１、ISO C标准化历程
+（1）1989年，ANSI Standard X3.159-1989标准通过，并在之后进一步上升为International Standard ISO/IEC9899:1990标准。
+其中，ANSI（the American National Standards Institute）是International Organization for Standardization (ISO)中代表美国的成员，而IEC指的是the International Electrotechnical Commission；
+（2）1999年，ISO C标准更新为ISO/IEC 9899:1999，主要增强了对于数值处理应用的支持；
+（3）1999年之后，分别于2001、2004和2007年发布了3个对ISO C标准的技术勘误。
+目前，ISO C标准由the ISO/IEC international standardization working group for the C programming language, known as ISO/IEC JTC1/SC22/WG14, or WG14 for short负责维护。
+２、ISO C标准的内容主要包括如下两块：C语言的语法和语义；C语言标准库。其中，C语言标准库可以按照其头文件划分为24个区（POSIX.1标准完全包含了这些头文件），如下图所示：
+
+![ISO C](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ISO%20C%E5%A4%B4%E6%96%87%E4%BB%B6.jpg)
+
+二、IEEE POSIX标准
+POSIX（Portable Operating System Interface）是一组最初由IEEE（Institute of Electrical and Electronics Engineers）开发形成的标准族，原本指是the IEEE Standard 1003.1-1988（操作系统接口），但是后来进一步扩展为包含很多带1003标识的标准和草案（如shell和utilities (1003.2)）。下面主要关注与UNIX环境编程密切相关的the 1003.1 operating system interface standard，并用POSIX.1指代the IEEE Standard 1003.1-1988标准的各种版本。
+与ISO C标准的目的一样，POSIX标准的目的在于提高应用程序在不同UNIX操作系统之间的移植性，它规定了符合POSIX标准的操作系统必须提供的服务。实际上，除了UNIX和UNIX-like系统外，很多其它的操作系统也遵循该标准。
+１、POSIX.1标准化历程
+（１）1988年，IEEE将the IEEE Standard 1003.1-1988标准提交给ISO。这个IEEE标准被更新为IEEE
+Standard 1003.1-1990 [IEEE 1990]后，成为International Standard ISO/IEC 9945-1:1990标准。此后，该标准经历了多次修改和扩展；
+（２）ISO于2008年接受了IEEE提交的POSIX.1最近修改版本，并于2009年将它发布为International Standard ISO/IEC 9945:2009标准；
+（３）经过20多年的发展，POSIX.1标准已经相对成熟和稳定，现在由the Austin Group（http://www.opengroup.org/austin）负责维护。
+２、POSIX.1标准的内容
+值得注意的是，the 1003.1 standard指定的是接口而不涉及具体实现，所有的例程都称为函数，因而没有区分系统调用和库函数。换句话说，POSIX规定那些库函数是一个符合标准规范的系统必须提供的（参数、功能、返回值），但是并没有提到系统调用——虽然大多数库函数会引发系统调用，但也有一些可以在系统内核之外实现。
+（１）POSIX.1接口分为必需头文件和可选头文件。注意，POSIX.1标准完全包含了ISO C标准库函数，因而它的必需头文件包括ISO C标准库函数的所有头文件；
+（２）必需头文件如下图所示：
+
+![POSIX](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/POSIX%20%E5%A4%B4%E6%96%87%E4%BB%B6.jpg)
+
+（３）可选头文件按照功能的不同进一步划分为40个分区，每个分区用由2~3个字母缩写构成的选项码来标识。每个分区包含多个接口，而这些接口依赖于特定选项的支持（很多选项用于处理实时扩展）。
+其中，包含未被废弃接口的分区有24个，如下图所示：
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/%E6%8E%A5%E5%8F%A3%E5%88%86%E5%8C%BA.jpg)
+
+特别地，其中的XSI分区所包含的头文件如下图所示：
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/XSI%E5%88%86%E5%8C%BA%E5%A4%B4%E6%96%87%E4%BB%B6.jpg)
+
+三、Single UNIX Specification标准
+１、Single UNIX Specification标准化历程
+Single UNIX Specification标准的第一个版本由X/Open于1994年发布，此后经过多次更新，于2010年由Open Group发布第四个版本（SUSv4）。其中，Open Group是由两个工业社团——X/Open和Open Software Foundation (OSF)于1996年合并而构成的。
+２、Single UNIX Specification标准与UNIX系统
+（１）Open Group拥有UNIX商标，使用Single UNIX Specification标准来判断一个系统能否被称为UNIX系统。系统提供商必须以文件形式提供符合性声明，通过验证符合性的测试后，才能得到使用UNIX商标的许可证；
+（２）Single UNIX Specification标准以POSIX.1作为其基本规范部分（即Single UNIX Specification标准是POSIX.1标准的超集），并额外定义了一些接口来扩展功能。
+特别地，所有UNIX系统都是遵循XSI（The X/Open System Interfaces）的实现。XSI是POSIX.1标准中可选接口头文件中的一个功能分区（如上所述）。XSI除描述了一些可选的POSIX.1接口外，还定义了遵循XSI的实现所必须支持的可选POSIX.1接口。这些必须被支持的接口包括file synchronization、thread stack address and size attributes、thread process-shared synchronization和 the _XOPEN_UNIX symbolic constant。
+
+四、典型UNIX系统
+UNIX系统的各种版本和变体都起源于PDP-11上运行的UNIX分时系统的第9（1976）和第7版本（1979），这两个系统是在贝尔实验室外首先得到广泛应用的UNIX系统，演进出了如下3个分支：
+（１）AT&T分支开发出System III 和 System V（被称为UNIX商用版本）；
+（２）加州伯克利分校分支开发出4.xBSD；
+（３）AT&T贝尔实验室的计算科学研究中心推出的UNIX研究版本，开发出UNIX分时系统第8和第9版本，并终止于1990年的第10版本。
+典型的UNIX系统包括 FreeBSD、 Linux、 Mac OS X和Solaris等，虽然其中只有 Mac OS X和Solaris可以称自己为UNIX系统，但是所有这4个系统都提供了相似的编程环境，因为它们都在某种程度上符合POSIX标准。
+１、FreeBSD基于4.4BSD-Lite操作系统，由FreeBSD project发布。FreeBSD project开发的所有软件（包括其二进制代码和源代码）都是可以免费使用的。
+２、Linux由Linus Torvalds于1991年参考MINIX这个类UNIX系统开发而成。Linux系统相比于其它系统的一个显著特点是：它经常是支持新硬件的第一个操作系统。Linux另一个独特之处在于它的商业模式：自由软件——可以从互联网上的很多站点中下载到。尽管Linux是自由的，但是它有一个GPL许可（GNU公共许可）。
+３、Mac OS X的核心操作系统（称为“Darwin”）基于Mach kernel、FreeBSD、an object-oriented framework for drivers和其它内核扩展等的集合。
+
+４、Solaris由Sun Microsystems（现为Oracle）开发，基于System V Release 4（SVR4），是唯一个在商业上取得成功的SVR4后裔。为了建立围绕Solaris的外部开发人员社区，Sun Microsystems于2005年将Solaris操作系统的大部分源代码开放给公众。
+
+## 2.2 基本系统数据类型
+
+caddr_t 内存地址（ 1 2 . 9节）
+clock_t 时钟滴答计数器（进程时间）
+comp_t 压缩的时钟滴答
+dev_t 设备号（主和次）
+fdse_t 文件描述符集
+fpos_t 文件位置
+gid_t 数值组ID
+ino_t i节点编号
+mode_t 文件类型，文件创建方式
+nlink_t 目录项的连接计数
+off_t 文件长度和位移量（带符号的）（lseek）
+pid_t 进程I D和进程组I D（带符号的）
+ptrdiff_t 两个指针相减的结果（带符号的）
+rlim_t 资源限制
+sigatomic_t 能原子地存取的数据类型
+sigset_t 信号集
+size_t 对象（例如字符串）长度（不带符号的）
+ssize_t 返回字节计数的函数（带符号的）（read, write）
+time_t 日历时间的秒计数器
+uid_t 数值用户ID
+wchar_t 能表示所有不同的字符码
+
+## 2.3 文件IO
+
+### 2.3.1 文件描述符
+
+对内核而言，所有打开的文件都通过文件描述符引用。当打开或者创建一个文件时，内核返回一个文件描述符。不带缓冲（nobuffered）IO中的 open、close、read、write、lseek将介绍。
+
+<font color=blue>STDIN_FILENO、STDOUT_FILENO、STDERR_FILENO</font>是标注输入、输出、错误的宏，值为 0、1、2
+
+### 2.3.2 无缓存IO函数定义
+
+```c
+int open(const char* path, int oflag, ... /*mode_t mode*/);
+int openat(int fd, const char* path, int oflag, ... /*mode_t mode*/);
+int creat(const char* path, mode_t mode);
+int close(int fd);
+off_t lseek(int fd, off_t offset, int whence);
+ssize_t read(int fd, void* buf, size_t nbytes);
+ssize_t write(int fd, const void* buf, size_t nbytes);
+```
+
+注意，负数的返回值是可能的，但是 -1 就绝对标识着出错。包括偏移量，都可以是负数，但是不能是 -1.
+
+## 2.3 进程控制
+
+### 2.3.1 BIOS
+
+它是一组固化到计算机上一个ROM上的程序，它保存着计算机最重要的基本输入输出的程序、开机后自检程序和系统自启动程序，其主要功能是为计算机提供最底层的、最直接的硬件设置和控制。
+
+BIOS设置程序是储存在BIOS芯片中的，[BIOS芯片](https://baike.baidu.com/item/BIOS%E8%8A%AF%E7%89%87)是主板上一块长方形或正方形芯片，只有在开机时才可以进行设置。（一般在计算机启动时按F2或者Delete进入BIOS进行设置，一些特殊机型按F1、Esc、F12等进行设置）。BIOS设置程序主要对计算机的基本输入输出系统进行管理和设置，使系统运行在最好状态下，使用BIOS设置程序还可以排除系统故障或者诊断系统问题。
+
+从奔腾时代开始，现代的电脑主板都使用NORFlash来作为BIOS的存储芯片。除了容量比ROM更大外，主要是NORFlash具有写入功能 ，运行电脑通过软件的方式进行BIOS的更新，而无需额外的硬件支持（通常EEPROM的擦写需要不同的电压和条件），且写入速度快。
+
+**bios有三大功能，如下**
+
+- 用于电脑刚接通电源时对硬件部分的检测，也叫做加电自检（Power On Self Test，简称POST），功能是检查电脑是否良好，通常完整的POST自检将包括对CPU，640K[基本内存](https://baike.baidu.com/item/%E5%9F%BA%E6%9C%AC%E5%86%85%E5%AD%98)，1M以上的[扩展内存](https://baike.baidu.com/item/%E6%89%A9%E5%B1%95%E5%86%85%E5%AD%98)，ROM，主板，CMOS[存储器](https://baike.baidu.com/item/%E5%AD%98%E5%82%A8%E5%99%A8)，[串并口](https://baike.baidu.com/item/%E4%B8%B2%E5%B9%B6%E5%8F%A3)，显示卡，软硬盘子系统及键盘进行测试，一旦在自检中发现问题，系统将给出提示信息或鸣笛警告。自检中如发现有错误，将按两种情况处理：对于严重故障（致命性故障）则停机，此时由于各种初始化操作还没完成，不能给出任何提示或信号；对于非严重故障则给出提示或声音报警信号，等待用户处理。
+
+- 初始化，包括创建[中断向量](https://baike.baidu.com/item/%E4%B8%AD%E6%96%AD%E5%90%91%E9%87%8F)、设置[寄存器](https://baike.baidu.com/item/%E5%AF%84%E5%AD%98%E5%99%A8)、对一些[外部设备](https://baike.baidu.com/item/%E5%A4%96%E9%83%A8%E8%AE%BE%E5%A4%87)进行初始化和检测等，其中很重要的一部分是BIOS设置，主要是对硬件设置的一些参数，当电脑启动时会读取这些参数，并和实际硬件设置进行比较，如果不符合，会影响系统的启动。
+
+- 引导程序，功能是引导[DOS](https://baike.baidu.com/item/DOS)或其他操作系统。BIOS先从[软盘](https://baike.baidu.com/item/%E8%BD%AF%E7%9B%98)或硬盘的开始[扇区](https://baike.baidu.com/item/%E6%89%87%E5%8C%BA)读取[引导记录](https://baike.baidu.com/item/%E5%BC%95%E5%AF%BC%E8%AE%B0%E5%BD%95)，如果没有找到，则会在显示器上显示没有引导设备，如果找到引导记录会把电脑的控制权转给引导程序，bios结束。
+
+###2.3.1 系统启动引导管理器
+
+计算机启动后运行的第一个程序，他是用来负责加载、传输控制到操作系统的内核，一旦把内核挂载，系统引导管理器的任务就算完成退出，系统引导的其它部份，比如系统的初始化及启动过程则完全由内核来控制完成；
+
+在X86 架构处理器的机器中，Linux、BSD 或其它Unix类的操作系统中GRUB、LILO 是大家最为常用，应该说是主流；
+
+Windows也有类似的工具NTLOADER；比如我们在机器中安装了Windows 98后，我们再安装一个Windows XP ，在机器启动的时候有一个菜单让我们选择进入是进入Windows 98 还是进入Windows XP。NTLOADER就是一个多系统启动引导管理器，NTLOADER 同样也能引导Linux，只是极为麻烦罢了；
+
+在Powerpc 架构处理器的机器中，如果安装了Linux的Powerpc 版本，大多是用yaboot 多重引导管理器，比如Apple机目前用的是IBM Powerpc处理器，所以如果想在Apple机上，安装Macos 和Linux Powerpc 版本，大多是用yaboot来引导多个操作系统；
+
+因为目前X86架构的机器仍是主流， 所以目前GRUB和LILO 仍然是我们最常用的多重操作系统引导管理器；
+
+### 2.3.3 内核初始化
+
+Linux下有3个特殊的进程，<font color=red>idle</font> 进程(PID = 0)，<font color=red>init</font> 进程(PID = 1)和 <font color=red>kthreadd</font> (PID = 2)
+
+简单的说idle是一个进程，其pid号为 0。其前身是系统创建的第一个进程，也是唯一一个没有通过fork()产生的进程。在smp系统中，每个处理器单元有独立的一个运行队列，而每个运行队
+列上又有一个idle进程，即有多少处理器单元，就有多少idle进程。系统的空闲时间，其实就是指idle进程的"运行时间"。既然是idle是进程，那我们来看看idle是如何被创建，又具体做了哪些事情？
+
+**idle的创建** 
+我们知道系统是从BIOS加电自检，载入MBR中的引导程序(LILO/GRUB),再加载linux内核开始运行的，一直到指定shell开始运行告一段落，这时用户开始操作Linux。而大致是在vmlinux的入口**startup_32(head.S)**中为pid号为0的原始进程设置了执行环境，然后这个原始进程开始执行**start_kernel()**完成Linux内核的初始化工作。包括初**始化页表，初始化中断向量表，初始化系统时间等**。继而调用 fork(),创建第一个用户进程: 
+
+```c
+kernel_thread(kernel_init, NULL, CLONE_FS | CLONE_SIGHAND); 
+```
+
+这个进程就是着名的pid为1的**init**进程，**init**继续完成剩下的初始化工作，然后**execve(/sbin/init)**, 成为系统中的其他所有进程的祖先。pid=0的原始进程，在创建了init进程后，调用 cpu_idle()演变成了idle进程。
+
+```c
+current_thread_info()->status |= TS_POLLING; 
+```
+
+在 smp系统中，除了上面刚才我们讲的主处理器(执行初始化工作的处理器)上idle进程的创建，还有从处理器(被主处理器activate的处理器)上的 idle进程，他们又是怎么创建的呢？接着看init进程，init在演变成/sbin/init之前，会执行一部分初始化工作，其中一个就是 smp_prepare_cpus()，初始化SMP处理器，在这过程中会在处理每个从处理器时调用 
+
+```c
+task = copy_process(CLONE_VM, 0, idle_regs(&regs), 0, NULL, NULL, 0); 　　
+init_idle(task, cpu); 　
+```
+
+即从init中复制出一个进程，并把它初始化为idle进程(pid仍然为0)。从处理器上的idle进程会进行一些Activate工作，然后执行cpu_idle()。 整个过程简单的说就是，原始进程(pid=0)创建init进程(pid=1),然后演化成idle进程(pid=0)。init进程为每个从处理器(运行队列)创建出一个idle进程(pid=0)，然后演化成
+/sbin/init。 　
+
+idle 进程优先级为MAX_PRIO，即最低优先级。早先版本中，idle是参与调度的，所以将其优先级设为最低，当没有其他进程可以运行时，才会调度执行 idle。而目前的版本中
+idle并不在运行队列中参与调度，而是在运行队列结构中含idle指针，指向idle进程，在调度器发现运行队列为空的时候运行，调入运行。
+
+从上面的分析我们可以看出，idle在系统没有其他就绪的进程可执行的时候才会被调度。不管是主处理器，还是从处理器，最后都是执行的cpu_idle()函数。所以cpu_idle做了什么事情。 因为idle进程中并不执行什么有意义的任务，所以通常考虑的是两点：1.节能，2.低退出延迟。 
+
+```c
+void cpu_idle(void) 
+{ 
+    int cpu = smp_processor_id(); 
+    current_thread_info()->status |= TS_POLLING; 
+    while (1) 
+    { 
+        tick_nohz_stop_sched_tick(1);
+        while (!need_resched()) 
+        { 
+            check_pgt_cache(); 
+            rmb();
+            if (rcu_pending(cpu)) 
+                rcu_check_callbacks(cpu, 0); 
+            if (cpu_is_offline(cpu)) 
+                play_dead(); 
+            local_irq_disable();
+            __get_cpu_var(irq_stat).idle_timestamp = jiffies; 
+            stop_critical_timings(); 
+            pm_idle(); 
+            start_critical_timings(); 
+        } 
+        tick_nohz_restart_sched_tick(); 
+        preempt_enable_no_resched(); 
+        schedule(); 
+        preempt_disable(); 
+    } 
+} 　　
+```
+
+循环判断need_resched以降低退出延迟，用idle()来节能。 　　
+默认的idle实现是hlt指令，hlt指令使CPU处于暂停状态，等待硬件中断发生的时候恢复，从而达到节能的目的。即从处理器C0态变到 C1态(见 ACPI标准)。这也是早些年
+windows平台上各种"处理器降温"工具的主要手段。当然idle也可以是在别的ACPI或者APM模块中定义的，甚至是自定义的一个idle(比如说nop)。 　　
+<font color=red>小结</font>：
+
+- idle是一个进程，其pid为0。 　　
+- 主处理器上的idle由原始进程(pid=0)演变而来。从处理器上的idle由init进程fork得到，但是它们的pid都为0。 3.
+- Idle进程为最低优先级，且不参与调度，只是在运行队列为空的时候才被调度。 　　
+- Idle循环等待need_resched置位。默认使用hlt节能。
+
+### 2.3.4 僵尸进程
+
+父进程 wait子进程，子进程执行完毕，没人管了。
+
+### 2.3.5  孤儿进程
+
+父进程没有，会被 init 进程收养
+
+## 2.4 线程
+
+进程，可以看成线程，只有一个控制线程。
+
+进程ID唯一，线程ID只在其进程上下文中有意义。进程ID类型为**pid_t**，线程ID类型为**pthread_t**类型，不同的操作系统，**pthread_t**的实现不同。

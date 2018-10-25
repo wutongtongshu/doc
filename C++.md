@@ -452,12 +452,10 @@ override，是覆盖的意思，所以是子类与父类的关系
 
 ## 4.1 gcc编译 c 程序
 
-```
+```makefile
     1.预处理，生成预编译文件（.文件）：
-
         Gcc –E hello.c –o hello.i
     2.编译，生成汇编代码（.s文件）：
-
         Gcc –S hello.i –o hello.s
     3.汇编，生成目标文件（.o文件）：
         Gcc –c hello.s –o hello.o
@@ -652,6 +650,19 @@ vpath %.l %.c src
 vpath %.h include
 ```
 
+### 4.2.3 VPATH
+
+vpath 是  make 使用的，gcc 是不会用的， make 分析依赖关系的时候使用
+
+- vpath <directories>            :: 当前目录中找不到文件时, 就从<directories>中搜索
+- vpath <pattern> <directories>  :: 符合<pattern>格式的文件, 就从<directories>中搜索
+- vpath <pattern>                :: 清除符合<pattern>格式的文件搜索路径
+- vpath                          :: 清除所有已经设置好的文件路径
+
+### 4.2.4 include命令
+
+这个命令可以包含其它的文件，共make使用，不是 gcc 命令
+
 ### 4.2.3 规则
 
 % 代表 通配符（注意不是正则表达式）。一个工作目标以分为前后缀。-
@@ -690,6 +701,18 @@ vpath %.h include
 
   GUN make 3.8  具有 90 多个隐含规则，涉及各种编程语言。隐含规则是上述规则的特殊情况。
 
+  - \$* ：表示目标文件的名称，不包含目标文件的扩展名。
+
+  - \$+ ：表示所有的依赖文件，这些依赖文件之间以空格分开，按照出现的先后为顺序，其中可能包含重复的依赖文件。
+
+  - \$< ：表示依赖项中第一个依赖文件的名称
+
+  - \$? ： 依赖项中，所有目标文件时间戳晚的文件（表示修改过），依赖文件间以空格分开
+
+    \$@ ：目标项中目标文件的名称
+
+  - \$^ ：依赖项中，所有不重复的依赖文件，以空格分开。
+
 ### 4.2.4 规则的结构
 
 ```makefile
@@ -703,6 +726,10 @@ OUTPUT_OPTION = -O $@
 CFLAGS : 编译选项
 
 CPPFLAGS： 预编译选项
+
+### 4.2.5 使用自定义makefile名字
+
+make -f：-f 参数可以只从 makefile 文件的文件名字
 
 ## 4.3 一目标多规则
 
@@ -857,5 +884,379 @@ test.txt:d.h
 
 这条规则要被执行，输出如上。
 
-### 4.3.4 例四
+## 4.4 注释
 
+下面四种注释中，第二种是通过命令是现实得
+
+```makefile
+#顶格写注释，make不显示
+	echo    #linux输出注释
+	#这个注释在make时显示
+	@#这个注释不显示
+```
+
+## 4.5 解决依赖问题
+
+### 4.5.1 include
+
+生成依赖文件 depend ，然后将 depend 文件 include 进 makefile 中
+
+```makefile
+depend: main.c test.c
+	gcc -M $^ > depend
+include depend
+```
+
+上述 makefile 命令产生的  depend 文件如下：
+
+```makefile
+main.o: main.c /usr/include/stdc-predef.h /usr/include/stdio.h \
+ /usr/include/features.h /usr/include/x86_64-linux-gnu/sys/cdefs.h \
+ /usr/include/x86_64-linux-gnu/bits/wordsize.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs.h \
+ /usr/include/x86_64-linux-gnu/gnu/stubs-64.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stddef.h \
+ /usr/include/x86_64-linux-gnu/bits/types.h \
+ /usr/include/x86_64-linux-gnu/bits/typesizes.h /usr/include/libio.h \
+ /usr/include/_G_config.h /usr/include/wchar.h \
+ /usr/lib/gcc/x86_64-linux-gnu/4.9/include/stdarg.h \
+ /usr/include/x86_64-linux-gnu/bits/stdio_lim.h \
+ /usr/include/x86_64-linux-gnu/bits/sys_errlist.h test.h
+test.o: test.c /usr/include/stdc-predef.h
+```
+
+由于我们使用了 `include depend` 语句，这个文件的内容会自动加入到 makefile 中。但是这样做存在问题，我们的目标必要条件是 `main.c test.c` ，想要在必要条件中新增一条或者删除一条必要条件，depend 不会重新生成，这导致不能增加源文件数量。
+
+### 4.5.2 sed替换
+
+先打印几个函数看看
+
+```makefile
+#获取 c 文件列表
+sources:=$(wildcard *.c)  #wildcard函数
+objects:=$(sources:.c=.o) #$(: =) 函数
+target:=$(sources:.c=)
+#这里,dependence是所有.d文件的列表.即把串sources串里的.c换成.d  
+dependence:=$(sources:.c=.d)
+
+.PHONY:study
+study:
+	@for s in $(sources); \
+                 do echo "sources are $$s"; done;
+	@for ss in $(objects); \
+                 do \
+	             echo "objects are $$ss"; \  #$$ss拼出$ss
+	             done
+	@for sss in $(target); \
+	             do \
+	             echo "target are $$sss"; \
+	             done;
+```
+
+能够运行的 main
+
+```makefile
+#获取 c 文件列表，给出 objects 和 dependence文件
+sources:=$(wildcard *.c)
+objects:=$(sources:.c=.o)
+dependence:=$(sources:.c=.d)
+
+main:main.o test.o
+	gcc -o main main.o test.o
+
+include $(dependence)
+%.d: %.c
+	set -e; rm -f $@; \
+	gcc -M $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$;
+
+.PHONY: clean
+clean:
+	rm -f main $(objects) $(dependence);
+```
+
+下面分析这段脚本
+
+由于有 <font color=red>include</font> 关键字，系统先分析  <font color=red>include</font> 这句， <font color=red>dependence</font> 的值是 *.d ，这个文件不存在，makefile 发现规则，这个规则作用于 *.d 文件，故先这执行这个规则，这个规则在任何时候都是最先执行的。
+
+```makefile
+%.d: %.c
+	set -e; rm -f $@; \
+	gcc -M $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$;
+```
+
+第一行，set -e 作用是，规则报错时返回。 rm -f 删除旧的 *.d 文件。 第二条命令将 *.c 的依赖放入相应的 *.d.xxx 临时文件中。第三条命令
+
+```makefile
+sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; 
+```
+
+是对*.d.xxx 临时文件内容进行处理。分成四个部分
+
+```makefile
+sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; 
+s
+# 这是 vim 字符串替换的标识符
+\($*\)\.o[ :]*
+# 如main.d: %main.c 首先\($*\)捕捉 main ，和后面的 \.o 组合成 mian.o。[ :]可以空格或者冒号，后面的*号是无限匹配，可以匹配出多个空格和冒号。实际文件中只有main.o :，也只匹配出这个。 \.o 据说 \是多余的。
+\1.o $@ : 
+# 对于前面捕捉到的main.o : ，进行替换，\1 是前面\($*\)捕捉的 main，合在一起就是main.o main.d:，说白了，就是用 main.o main.d 替换 main.o 
+g 
+# 这是 vim 字符串替换的标识符
+```
+
+第四条命令删除临时生成的 *.d.xxx文件。
+
+```makefile
+main:main.o test.o
+	gcc -o main main.o test.o
+```
+
+这个规则执行后，发现缺少 .o 文件，会根据第三条命令生成的规则，生成 .o 文件，最终生成可执行文件
+
+## 4.6 宏
+
+多条命令，使用宏来做。test是一个宏
+
+```makefile
+define test 
+@echo 这是第一行
+@echo 这是第二行
+endef
+
+.PHONY:all
+all:
+	$(test)
+```
+
+输出
+
+```shell
+wudeyun@www:~/aaa$ make
+这是第一行
+这是第二行
+```
+
+## 4.7 内置函数
+
+### 4.7.1 filter 收集匹配的
+
+将words看成一个个单词，来匹配
+
+```makefile
+words := he the hen other the%
+
+.PHONY:all
+all:
+	@echo he matches: $(filter he, $(words))
+	@echo %he matches: $(filter %he, $(words))
+	@echo he% matches: $(filter he%, $(words))
+	@echo %he% matches: $(filter %he%, $(words))
+```
+
+输出
+
+```shell
+wudeyun@www:~/aaa$ make
+he matches: he
+%he matches: he the
+he% matches: he hen
+%he% matches: the%
+```
+
+### 4.7.2 filter-out 收集不匹配的
+
+```makefile
+words := he the hen other the%
+
+.PHONY:all
+all:
+	@echo he matches: $(filter-out he, $(words))
+	@echo %he matches: $(filter-out %he, $(words))
+	@echo he% matches: $(filter-out he%, $(words))
+	@echo %he% matches: $(filter-out %he%, $(words))
+```
+
+输出
+
+```shell
+wudeyun@www:~/aaa$ make
+he matches: the hen other the%
+%he matches: hen other the%
+he% matches: the other the%
+%he% matches: he the hen other
+```
+
+### 4.7.3 findstring 查早字串
+
+```makefile
+.PHONY:all
+all:
+	@echo find path: $(findstring xx, aa bb xx)
+```
+
+### 4.7.4 subst 字节替换
+
+```makefile
+sources := 1.c 2.c 3.c 4.c
+objects := $(subst .c,.o, $(sources))
+.PHONY:all
+all:
+	@for i in $(objects);\
+	do \
+         echo "$$i";\
+	done
+```
+
+输出
+
+```makefile
+wudeyun@www:~/aaa$ make
+1.o
+2.o
+3.o
+4.o
+```
+
+### 4.7.5 patsubst 模式匹配替换
+
+```makefile
+sources := /root/a /root/b
+objects := $(patsubst /%,%, $(sources))
+.PHONY:all
+all:
+	@for i in $(objects);\
+	do \
+         echo "$$i";\
+	done
+```
+
+输出
+
+```makefile
+wudeyun@www:~/aaa$ make
+root/a
+root/b
+```
+
+### 4.7.6 words单词数量
+
+###4.7.7 firstword
+
+###4.7.8 wordlist
+
+### 4.7.9 wildcard
+
+```makefile
+$(wildcard *.c *.h) #获取.c 和 .h文件
+```
+
+### 4.7.10 dir 返回目录部分
+
+```makefile
+$(dir list)
+```
+
+返回目录部分
+
+###4.7.11 notdir返回名字部分
+
+$(notdir list)
+
+### 4.7.12 suffix后缀
+
+```makefile
+$(suffix list)
+```
+
+### 4.7.13 basename去掉后缀
+
+```makefile
+$(basename list)
+```
+
+### 4.7.14 增加后缀
+
+```makefile
+$(addsuffix suffix,name)
+```
+
+###4.7.15 foreach
+
+```makefile
+names := a b c d
+files := $(foreach n,$(names),$(n).o)
+.PHONY:all
+all:
+	@for i in $(files);\
+	do \
+         echo "$$i";\
+	done
+```
+
+输出
+
+```makefile
+$(name)中的单词会被挨个取出，并存到变量“n”中，“$(n).o”每次根据“$(n)”计算出一个值，这些值以空格分隔，最后作为foreach函数的返回，所以，$(files)的值是“a.o b.o c.o d.o”。
+```
+
+### 4.7.16 if
+
+（if 条件，else, then）
+
+```makefile
+names := a b c d
+names += $(if $((2>1)),2,3)
+.PHONY:all
+all:
+	@for i in $(names);\
+	do \
+         echo "$$i";\
+	done
+```
+
+输出
+
+```shell
+a
+b
+c
+d
+2
+```
+
+## 4.8 自定义函数
+
+```makefile
+.PHONY : test
+ 
+define foo1
+    @echo "My name is $(0)"
+endef
+ 
+define foo2
+    @echo "my name is $(0)"
+    @echo "param => $(1)"
+endef
+ 
+var := $(call foo1)    
+new := $(foo1)         
+ 
+test :
+    @echo "var => $(var)"   
+    @echo "new => $(new)"   
+    $(call foo1) 
+    $(call foo2, wudeyun)
+```
+
+输出
+
+```shell
+wudeyun@www:~/aaa$ make
+My name is foo1
+my name is foo2
+param =>  wudeyun
+```
