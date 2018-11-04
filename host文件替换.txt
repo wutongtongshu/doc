@@ -1,0 +1,12 @@
+访问https://www.ipaddress.com/网站
+通过下面这两个域名，获取对应的IP，
+填入host文件
+151.101.185.194 github.global.ssl.fastly.net
+192.30.253.112 github.com
+
+输入：ipconfig /flushdns
+立即生效
+
+下面这种方法也可以：
+nslookup -vc github.global.ssl.fastly.net 8.8.8.8
+获取IP，填入即可

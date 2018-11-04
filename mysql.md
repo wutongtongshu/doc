@@ -11,11 +11,32 @@ mysql>
 2、连接到远程主机上的MYSQL。假设远程主机的IP为：110.110.110.110，用户名为root,密码为abcd123。
 
 键入以下命令
-    mysql -h110.110.110.110 -u username-p 123;（注:u与username之间可以不用加空格，其它也一样）
+​    mysql -h110.110.110.110 -u username-p 123;（注:u与username之间可以不用加空格，其它也一样）
 
-## 1.2 退出MYSQL
+## 1.2 命令行
 
-exit 
+```mysql
+?         (\?) Synonym for `help'.
+clear     (\c) Clear the current input statement.
+connect   (\r) Reconnect to the server. Optional arguments are db and host.
+delimiter (\d) Set statement delimiter.
+ego       (\G) Send command to mysql server, display result vertically.
+exit      (\q) Exit mysql. Same as quit.
+go        (\g) Send command to mysql server.
+help      (\h) Display this help.
+print     (\p) Print current command.
+prompt    (\R) Change your mysql prompt.
+quit      (\q) Quit mysql.
+rehash    (\#) Rebuild completion hash.
+source    (\.) Execute an SQL script file. Takes a file name as an argument.
+status    (\s) Get status information from the server.
+tee       (\T) Set outfile [to_outfile]. Append everything into given outfile.
+notee     (\t) Don't write into outfile.
+use       (\u) Use another database. Takes database name as argument.
+charset   (\C) Switch to another charset. Might be needed for processing binlog with multi-byte charsets.
+warnings  (\W) Show warnings after every statement.
+nowarning (\w) Don't show warnings after every statement.
+```
 
 ## 1.3 修改密码
 
@@ -50,7 +71,7 @@ mysqladmin -u username -p ab12 password djg345
 
   1. 直接操作用户表，用户表字段很多，很难插入成功，不建议使用
 
-     mysql> insert into mysql.user .....
+     mysql>   insert into mysql.user(user,host,password) values('mytest','localhost',password('1234'));
 
   2. 使用 create 命令，创建用户user和user1，密码都是123456
 
@@ -405,18 +426,18 @@ mysql> describe taa;
 - 1.导出整个数据库
 
 导出文件默认是存在mysql\bin目录下
-    mysqldump -u 用户名 -p 数据库名 > 导出的文件名
-    mysqldump -u user_name -p123456 database_name > outfile_name.sql
+​    mysqldump -u 用户名 -p 数据库名 > 导出的文件名
+​    mysqldump -u user_name -p123456 database_name > outfile_name.sql
 
 - 2.导出一个表
 
 ​    mysqldump -u 用户名 -p 数据库名 表名> 导出的文件名
-    mysqldump -u user_name -p database_name table_name > outfile_name.sql
+​    mysqldump -u user_name -p database_name table_name > outfile_name.sql
 
 - 3.导出一个数据库结构
 
 ​    mysqldump -u user_name -p -d –add-drop-table database_name > outfile_name.sql
-    -d 没有数据 –add-drop-table 在每个create语句之前增加一个drop table
+​    -d 没有数据 –add-drop-table 在每个create语句之前增加一个drop table
 
 - 4.带语言参数导出
 

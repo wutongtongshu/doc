@@ -450,10 +450,12 @@ override，是覆盖的意思，所以是子类与父类的关系
 
 # 4 linux c/c++
 
-## 4.1 gcc编译 c 程序
+## 4.2 makefile
+
+### 4.2.1 gcc
 
 ```makefile
-    1.预处理，生成预编译文件（.文件）：
+ 1.预处理，生成预编译文件（.文件）：
         Gcc –E hello.c –o hello.i
     2.编译，生成汇编代码（.s文件）：
         Gcc –S hello.i –o hello.s
@@ -462,10 +464,6 @@ override，是覆盖的意思，所以是子类与父类的关系
     4.链接，生成可执行文件：
         Gcc hello.o –o hello
 ```
-
-set noexpandtab 
-
-### 4.1.1 gcc 语法
 
 | 后缀名    | 所对应的语言                                                 |
 | --------- | ------------------------------------------------------------ |
@@ -479,8 +477,6 @@ set noexpandtab
 | -L dir    | 在库文件的搜索路径列表中添加 dir 目录                        |
 | -static   | 链接静态库                                                   |
 | -llibrary | 连接名为library的库文件                                      |
-
-## 4.2 makefile
 
 ### 4.2.1 没有头文件
 
@@ -652,7 +648,65 @@ vpath %.h include
 
 ### 4.2.3 VPATH
 
-vpath 是  make 使用的，gcc 是不会用的， make 分析依赖关系的时候使用
+make file分析依赖关系的时候，要用到 vpath ，这个 vpath 事告诉make从何处找文件。
+
+> Makefile
+>
+> src
+>
+> > main.c
+> >
+> > test.c
+>
+> include
+>
+> > test.h
+
+这是告诉make工具，在分析依赖关系的时候，到上述两个目录去找。
+
+```c
+//main.c头文件依赖
+include "stdio.h"
+include "../include/test.h"
+```
+
+```makefile
+vpath %.c src
+vpath %.h include
+CC=gcc
+
+main:main.o test.o
+main.o:main.c test.h
+test.o:test.c
+
+.PHONY:clean
+clean:
+	rm -rf *.o main
+```
+
+make工具，根据Makefile文件，会逐条分析依赖文件是否存在。makefile会将分析得到的源文件
+
+路径传递给 gcc ，但是头文件不会传给 gcc ，这个可能的原因是 头文件是相对路径，不好控制。
+
+```makefile
+#make文件
+vpath %.h include
+vpath %.c src
+CC=gcc
+
+main:main.o test.o
+main.o:main.c test.h
+test.o:test.c
+
+.PHONY:clean
+clean:
+	rm -rf *.o main
+
+#make输出
+gcc    -c -o main.o src/main.c
+gcc    -c -o test.o src/test.c
+gcc   main.o test.o   -o main
+```
 
 - vpath <directories>            :: 当前目录中找不到文件时, 就从<directories>中搜索
 - vpath <pattern> <directories>  :: 符合<pattern>格式的文件, 就从<directories>中搜索
@@ -1260,3 +1314,236 @@ My name is foo1
 my name is foo2
 param =>  wudeyun
 ```
+
+## 4.9 静态库
+
+ar命令可以用来创建、修改库，也可以从库中提出单个模块。库是一单独的文件，里面包含了按照特定的结构组织起来的其它的一些文件（称做此库文件的member）。原始文件的内容、模式、时间戳、属主、组等属性都保留在库文件中。
+　　下面是ar命令的格式：
+　　ar [-]{dmpqrtx}[abcfilNoPsSuvV][membername] [count] archive files...
+　　例如我们可以用**ar rv libtest.a hello.o hello1.o**来
+生成一个库，库名字是test，链接时可以用-ltest链接。该库中存放了两个模块hello.o和hello1.o。选项前可以有‘-'字符，也可以
+没有。下面我们来看看命令的操作选项和任选项。现在我们把{dmpqrtx}部分称为操作选项，而[abcfilNoPsSuvV]部分称为任选项。
+　　{dmpqrtx}中的操作选项在命令中只能并且必须使用其中一个，它们的含义如下：
+
+- d：从库中删除模块。按模块原来的文件名指定要删除的模块。如果使用了任选项v则列出被删除的每个模块。
+- m：该操作是在一个库中移动成员。当库中如果有若干模块有相同的符号定义(如函数定义)，则成员的位置顺序很重要。如果没有指定任选项，任何指定的成员将移到库的最后。也可以使用'a'，'b'，或'i'任选项移动到指定的位置。
+- p：显示库中指定的成员到标准输出。如果指定任选项v，则在输出成员的内容前，将显示成员的名字。如果没有指定成员的名字，所有库中的文件将显示出来。
+- q：快速追加。增加新模块到库的结尾处。并不检查是否需要替换。'a'，'b'，或'i'任选项对此操作没有影响，模块总是追加的库的结尾处。如果使用了任选项v则列出每个模块。 这时，库的符号表没有更新，可以用'ar s'或ranlib来更新库的符号表索引。
+- r：在库中插入模块(替换)。当插入的模块名已经在库中存在，则替换同名的模块。如果若干模块中有一个模块在库中不存在，ar显示一个错误消息，并不替换其他同名模块。默认的情况下，新的成员增加在库的结尾处，可以使用其他任选项来改变增加的位置。
+- t：显示库的模块表清单。一般只显示模块名。
+- x：从库中提取一个成员。如果不指定要提取的模块，则提取库中所有的模块。
+
+
+　　下面在看看可与操作选项结合使用的任选项：
+
+- a：在库的一个已经存在的成员后面增加一个新的文件。如果使用任选项a，则应该为命令行中membername参数指定一个已经存在的成员名。
+- b：在库的一个已经存在的成员前面增加一个新的文件。如果使用任选项b，则应该为命令行中membername参数指定一个已经存在的成员名。
+- c：创建一个库。不管库是否存在，都将创建。
+- f：在库中截短指定的名字。缺省情况下，文件名的长度是不受限制的，可以使用此参数将文件名截短，以保证与其它系统的兼容。
+- i：在库的一个已经存在的成员前面增加一个新的文件。如果使用任选项i，则应该为命令行中membername参数指定一个已经存在的成员名(类似任选项b)。
+- l：暂未使用
+- N：与count参数一起使用，在库中有多个相同的文件名时指定提取或输出的个数。
+- o：当提取成员时，保留成员的原始数据。如果不指定该任选项，则提取出的模块的时间将标为提取出的时间。
+- P：进行文件名匹配时使用全路径名。ar在创建库时不能使用全路径名（这样的库文件不符合POSIX标准），但是有些工具可以。
+- s：写入一个目标文件索引到库中，或者更新一个存在的目标文件索引。甚至对于没有任何变化的库也作该动作。对一个库做ar s等同于对该库做ranlib。
+- S：不创建目标文件索引，这在创建较大的库时能加快时间。
+- u：一般说来，命令ar r...插入所有列出的文件到库中，如果你只想插入列出文件中那些比库中同名文件新的文件，就可以使用该任选项。该任选项只用于r操作选项。
+- v：该选项用来显示执行操作选项的附加信息。
+- V：显示ar的版本。
+
+## 4. 10 动态库
+
+Linux下动态库文件的文件名形如 `libxxx.so`，其中so是 Shared Object 的缩写，即可以共享的目标文件。
+
+在链接动态库生成可执行文件时，并不会把动态库的代码复制到执行文件中，而是在执行文件中记录对动态库的引用。
+
+程序执行时，再去加载动态库文件。如果动态库已经加载，则不必重复加载，从而能节省内存空间。
+
+Linux下生成和使用动态库的步骤如下：
+
+1. 编写源文件。
+2. 将一个或几个源文件编译链接，生成共享库。
+3. 通过 `-L<path> -lxxx` 的gcc选项链接生成的libxxx.so。
+4. 把libxxx.so放入链接库的标准路径，或指定 `LD_LIBRARY_PATH`，才能运行链接了libxxx.so的程序。
+
+下面通过实例详细讲解。
+
+## 编写源文件
+
+建立一个源文件： max.c，代码如下：
+
+```
+int max(int n1, int n2, int n3)
+{
+    int max_num = n1;
+    max_num = max_num < n2? n2: max_num;
+    max_num = max_num < n3? n3: max_num;
+    return max_num;
+}
+```
+
+编译生成共享库：
+
+```
+gcc -fPIC -shared -o libmax.so max.c
+```
+
+我们会得到libmax.so。
+
+实际上上述过程分为编译和链接两步， -fPIC是编译选项，PIC是 Position Independent Code 的缩写，表示要生成位置无关的代码，这是动态库需要的特性； -shared是链接选项，告诉gcc生成动态库而不是可执行文件。
+
+上述的一行命令等同于：
+
+```
+gcc -c -fPIC max.c
+gcc -shared -o libmax.so max.o
+```
+
+## 为动态库编写接口文件
+
+为了让用户知道我们的动态库中有哪些接口可用，我们需要编写对应的头文件。
+
+建立 max.h ，输入以下代码：
+
+```
+#ifndef __MAX_H__
+#define __MAX_H__
+
+int max(int n1, int n2, int n3);
+
+#endif
+```
+
+## 测试，链接动态库生成可执行文件
+
+建立一个使用`max`函数的test.c，代码如下：
+
+```
+#include <stdio.h>
+#include "max.h"
+
+int main(int argc, char *argv[])
+{
+    int a = 10, b = -2, c = 100;
+    printf("max among 10, -2 and 100 is %d.\n", max(a, b, c));
+    return 0;
+}
+```
+
+`gcc test.c -L. -lmax` 生成a.out，其中`-lmax`表示要链接`libmax.so`。
+`-L.`表示搜索要链接的库文件时包含当前路径。
+
+注意，如果同一目录下同时存在同名的动态库和静态库，比如 `libmax.so` 和 `libmax.a` 都在当前路径下，
+则gcc会优先链接动态库。
+
+## 运行
+
+运行 `./a.out` 会得到以下的错误提示。
+
+```
+./a.out: error while loading shared libraries: libmax.so: cannot open shared object file: No such file or directory
+```
+
+找不到libmax.so，原来Linux是通过 `/etc/ld.so.cache` 文件搜寻要链接的动态库的。
+而 `/etc/ld.so.cache` 是 ldconfig 程序读取 `/etc/ld.so.conf` 文件生成的。
+（注意， `/etc/ld.so.conf` 中并不必包含 `/lib` 和 `/usr/lib`，`ldconfig`程序会自动搜索这两个目录）
+
+如果我们把 `libmax.so` 所在的路径添加到 `/etc/ld.so.conf` 中，再以root权限运行 `ldconfig` 程序，更新 `/etc/ld.so.cache` ，`a.out`运行时，就可以找到 `libmax.so`。
+
+但作为一个简单的测试例子，让我们改动系统的东西，似乎不太合适。
+还有另一种简单的方法，就是为`a.out`指定 `LD_LIBRARY_PATH`。
+
+```
+LD_LIBRARY_PATH=. ./a.out
+```
+
+程序就能正常运行了。`LD_LIBRARY_PATH=.` 是告诉 `a.out`，先在当前路径寻找链接的动态库。
+
+> 对于elf格式的可执行程序，是由ld-linux.so*来完成的，它先后搜索elf文件的 `DT_RPATH` 段, 环境变量 `LD_LIBRARY_PATH`, /etc/ld.so.cache文件列表, /lib/,/usr/lib目录, 找到库文件后将其载入内存. (http://blog.chinaunix.net/uid-23592843-id-223539.html)
+
+## makefile让工作自动化
+
+编写makefile，内容如下：
+
+```
+.PHONY: build test clean
+
+build: libmax.so
+
+libmax.so: max.o
+    gcc -o $@  -shared $<
+
+max.o: max.c
+    gcc -c -fPIC $<
+
+test: a.out
+
+a.out: test.c libmax.so
+    gcc test.c -L. -lmax
+    LD_LIBRARY_PATH=. ./a.out
+
+clean:
+    rm -f *.o *.so a.out
+```
+
+`make build`就会生成`libmax.so`， `make test`就会生成`a.out`并执行，`make clean`会清理编译和测试结果。
+
+# 5 进程环境
+
+## 5.1 C 程序起始地址
+
+C 程序在链接生成可执行文件时，连接器会把一个启动例程链接到程序中，作为程序的起始地址，启动例程先获取命令行参数和环境变量值，然后调用main方法。C 程序总是从 main 方法开始执行。
+
+##5.2 线程终止
+
+- 从main返回
+- 调用 exit
+- 调用 _exit 和_Exit
+- 最后一个线程，从其启动例程返回
+- 最后一个线程调用 pThread_exit
+
+异常终止三种
+
+- abort
+- 收到信号
+- 最后一个线程对取消做出响应
+
+## 5.3 中止处理函数
+
+由exit自动调用，可以使用ateit登记多达 32 个中止处理函数
+
+## 5.4 命令行参数
+
+```c
+#include "stdio.h"
+#include "stdlib.h"
+
+int  main(int argc, char* argv[]){
+    int i;
+    for(i = 0; NULL != argv[i]; ++i){
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+    exit(0);
+}
+```
+
+ISO  C 和UNIX 都规定， argv[argc] = null，就是多加了一个null在数组后边
+
+## 5.5 环境表
+
+```c
+#include "stdio.h"
+#include "stdlib.h"
+extern char** environ;
+
+int  main(int argc, char* argv[]){
+    if(NULL != environ){
+        while(NULL != *environ){
+	    printf("%s\n", (*environ++));
+	} 
+    }
+}
+```
+
+每个程序都有一张环境表，char** environ 是一个全局变量，getenv 和 putevn操作特定的变量。
+
