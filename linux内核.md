@@ -1032,7 +1032,75 @@ Local area network
 
 ![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/TCP_IP%E5%8D%8F%E8%AE%AE%E6%97%8F.png)
 
+### 3.2.4 数据链路层
+
+####3.2.4.1 enthernet和IEEE802
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/ethernet%E5%B8%A7%E7%BB%93%E6%9E%84.png)
 
 
 
+前12字节MAC地址，至少应包括ARP请求的 28 字节加 PAD 的 18字节，加类型 2 ，共 38 字节。ethernet 是 IEEE802的基础。
 
+#### 3.2.4.2 SLIP
+
+下面的规则描述了SLIP协议定义的帧格式：
+
+1) IP数据报以一个称作END(0xC0)的特殊[字符](https://baike.baidu.com/item/%E5%AD%97%E7%AC%A6)结束。同时，为了防止数据报到来之前的[线路噪声](https://baike.baidu.com/item/%E7%BA%BF%E8%B7%AF%E5%99%AA%E5%A3%B0)被当成数据报内容，大多数实现在数据报的开始处也传一个END字符（如果有线路噪声，那么END字符将结束这份错误的[报文](https://baike.baidu.com/item/%E6%8A%A5%E6%96%87)。这样当前的报文得以正确地传输，而前一个错误报文交给上层后，会发现其内容毫无意义而被丢弃）。
+
+2) 如果I P报文中某个字符为END，那么就要连续传输两个字节ESC,ESC_END(0XDB,0xDC)来取代它。
+
+0xDB这个特殊[字符](https://baike.baidu.com/item/%E5%AD%97%E7%AC%A6)被称作SLIP的ESC字符，但是它的值与ASCII码的ESC字符(0x1B)不同。
+
+3) 如果IP报文中某个字符为SLIP的ESC字符，那么就要连续传输两个字节ESC,ESC_ESC(0xDB,0xDD)来取代它。
+
+SLIP是一种简单的帧封装方法，还有一些值得一提的缺陷：
+
+1) 每一端必须知道对方的I P地址。没有办法把本端的I P地址通知给另一端。
+
+2)[数据帧](https://baike.baidu.com/item/%E6%95%B0%E6%8D%AE%E5%B8%A7)中没有类型字段（类似于以太网中的类型字段）。如果一条串行线路用于SLIP，那么它不能同时使用其他协议。
+
+3 ) SLIP没有在数据帧中加上检验和（类似于以太网中的CRC字段）。如果SLIP传输的[报文](https://baike.baidu.com/item/%E6%8A%A5%E6%96%87)被[线路噪声](https://baike.baidu.com/item/%E7%BA%BF%E8%B7%AF%E5%99%AA%E5%A3%B0)影响而发生错误，只能通过上层协议来发现（另一种方法是，新型的[调制解调器](https://baike.baidu.com/item/%E8%B0%83%E5%88%B6%E8%A7%A3%E8%B0%83%E5%99%A8)可以检测并纠正错误报文）。这样，上层协议提供某种形式的CRC就显得很重要。
+
+#### 3.2.4.3 PPP
+
+点到点，三种格式信息，三种功能。
+
+####3.2.4.3 4 环回接口
+
+走IP封装到数据链路层
+
+### 3.2.5 IP协议
+
+RFC 791文件时正式规范
+
+### 3.2.6 TCP协议
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/TCP%E6%A0%BC%E5%BC%8F.png)
+
+- 顺序号（Sequence number）、确认号（Acknowledge number），从0 到 $2^{32} -1$。
+
+- URG 紧急指针（ u rgent pointer）有效（见2 0 . 8节）。
+- ACK 确认序号有效。
+- PSH 接收方应该尽快将这个报文段交给应用层。
+- RST 重建连接。
+- SYN 同步序号用来发起一个连接。这个标志和下一个标志将在第1 8章介绍。
+- FIN 发端完成发送任务。
+
+#### 3.2.6.1 TCP三次握手
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/TCP%E5%BB%BA%E7%AB%8B.jpg)
+
+三次握手说明
+
+1. A 发送 SYN =1、ACK=0、sequence number =x (x 的值与 INS 相同，是随机产生的)，ACK = 0 是默认值。消息送出之后，A 处于 SYN-SENT 状态。
+2. B 端必须处于 LISTEN 状态才能收到 A 的连接请求。B 收到 A 的连接请求后，发送 ACK = 1，ack number = x +1, SYN =1, sequence number = y (y 的值与 INS 相同，是随机产生的) 表示确认请求。这里的 ack number 表示下一个报文的sequence number 应该是 x + 1。只有 ACK =1 时， ack number  才是有效的。响应报文发出后，B 处于 SYN-RECEIVE 状态。
+3. A 接到相应报文检验无误后，再次发送 ACK =1, ack number = y +1，sequence num = x + 1 的报文到 B，A 进入ESTABLISHEN ，B如果校验无误，则 B 称为 ESTABLISHEN 状态。
+
+三次握手原因，若采用两次握手，假设 A 发送连接报文到 B ，若由于延迟，报文连发两次，第二次成功建立连接，数据传输完毕，连接释放。随后 B 收到延迟的报文，以为 A 发送连接请求，B 相应报文，建立了连接等着 A 发数据，由于 A 已经发完了报文，所以 A 不会向 B 发报文，这就导致 B 一直等着。
+
+#### 3.2.6.2 TCP 四次分手
+
+![](https://github.com/wutongtongshu/doc/raw/master/%E7%8E%B0%E4%BB%A3%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F/TCP%E6%96%AD%E5%BC%80.jpg)
+
+四次分手，原因是 TCP 是双工的，必须双方都关闭。

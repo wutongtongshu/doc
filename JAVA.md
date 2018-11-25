@@ -389,3 +389,40 @@ resolveLazily：为true时，启用推迟文件解析，以便在UploadAction中
 | xwd     | image/x-xwindowdump                     |
 | z       | application/x-compress                  |
 | zip     | application/zip                         |
+
+## 1.2 日志
+
+```
+%n - 换行
+%m - 日志内容
+%p - 日志级别(FATAL,   ERROR,   WARN,   INFO,   DEBUG   or   custom)
+%r - 程序启动到现在的毫秒数
+%% - percent   sign   in   output
+%t - 当前线程名
+%d   -  日期和时间,
+常用的格式有 %d{DATE}, %d{ABSOLUTE}, %d{HH:mm:ss,SSS}, %d{ddMMyyyy HH:mm:ss,SSS}。。。
+%l - 同 %F%L%C%M
+%F - java源文件名
+%L - java源码行数
+%c 输出所属类的全名，可写为 %c{Num} ,Num类名输出的范围 如："com.sun.aaa.classB",%C{2}将使日志输出输出范围为：aaa.classB
+%M - java方法名
+%n - 换行
+%m - 日志内容
+%p - 日志级别(FATAL,  ERROR,  WARN,  INFO,  DEBUG  or  custom)
+%r - 程序启动到现在的毫秒数
+%l：输出日志事件的发生位置，相当于%c.%M(%F:%L)的组合，包括类全名、方法、文件名以及在代码中的行数。例
+%x：输出和当前线程相关联的NDC(嵌套诊断环境)，尤其用到像java servlets这样的多客户多线程的应用中。
+
+常用的格式有 %d{DATE}, %d{ABSOLUTE}, %d{HH:mm:ss,SSS}, %d{ddMMyyyy HH:mm:ss,SSS}。。。
+
+示例：
+[%d{HH\:mm\:ss\:SSS}][%p] (%c\:%L) - %m%n
+
+输出格式为：[08:58:59:412][INFO] (com.soon.action:35) - 服务器启动
+[%d{ISO8601}] %-5p %-x %X{user} %n     [%l]-%m%n
+[2018-11-16 10:20:58,432] ERROR   
+     审批同意与否不能为空, task id is: 201811160011
+
+log4j.appender.CONSOLE.layout.ConversionPattern =  %d{ABSOLUTE} %5p %c{1}:%L [%t:%r]- %m%n
+```
+
