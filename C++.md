@@ -250,6 +250,61 @@ inline int f(int i) { return i+1; }
 
 引用和普通变量是严格区分的，引用赋值给普通变量是复制赋值。
 
+## 1.12 空指针 0 \\0的问题
+
+**空指针**：C 的空指针是 (void*) 0 ，首先它是一个指向0的指针类型。C++的空指针以前是数字0，在C++11中是nullptr，是数字0显然有歧义，已经放弃了。在VS 2013的库文件string.h中可以看到如果定义。
+
+```
+1 /* Define NULL pointer value */
+2 #ifndef NULL
+3 #ifdef __cplusplus
+4 #define NULL    0
+5 #else  /* __cplusplus */
+6 #define NULL    ((void *)0)
+7 #endif  /* __cplusplus */
+8 #endif  /* NULL */
+```
+
+在C语言中，“当常量0处于应该作为指针使用的上下文中时，它就作为空指针使用”（《征服C指针》）。例如，下边的指针定义和初始化是没问题的（即没警告也没报错），这里用的是数字 0 ，它不是字符 0。C 语言隐式转化为(void*) 0 
+
+```
+ int * p = 0;    /* C language */
+```
+
+​     但如果定义成如下的样子呢？C 语言隐士转换失效
+
+```
+ int * p = 3;    /* C language */
+```
+
+　　这一句可以编译通过，但在VS 2013中有这样的警告：“warning C4047: “初始化”:“int *”与“int”的间接级别不同”。
+
+　　我又试了一下这一句在C++中的情况，VS 2013就直接报错了：“ ‘int’ 类型的值不能用于初始化 ‘int *’ 类型的实体”。C++必须要显式转换。c++11中重新定义了nullptr关键字，表示空指针。
+
+　　**2.** ‘\0’：它的ASCII码值为0。注意它与空格' '（ASCII码值为32）及'0'（ASCII码值为48）不一样的。
+
+　　在《征服C指针》中，作者还提到了一种错误的程序写法：使用NULL来结束字符串。例如下边的程序就是有问题的：NULL被定义为指向0的指针，为指针类型。
+
+```
+char str[4] = { '1', '2', '3', NULL };    /* C language */
+```
+
+　　在VS 2013中，会的这样的警告：“warning C4047: “初始化”:“char”与“void *”的间接级别不同”。而在C++中，这一句是没有问题的。
+
+　　还有一点值得注意，如下的程序在C/C++中都是没有问题的：
+
+```
+char str[4] = { '1', '2', '3', 0 };    / C/C++ language */
+```
+
+　　但为了防止混淆，在C/C++中，当要给一个字符串添加结束标志时，都应该用‘\0’而不是NULL或0。
+
+## 1.13 回车换行
+
+当按下回车键时，在标准输入缓存中，会多一个<font color=red>回车键</font>。windows系统在进行文件操作时，会将这个回车键转化为两个字符<font color=red>回车和换行</font>再写入文件中，而linux系统不会。读出时相反。
+
+
+
 # 2 抽象机制
 
 ## 2.1 copy 初始化
@@ -258,6 +313,63 @@ inline int f(int i) { return i+1; }
 Date d1 = my_bir thday; // initialization by copy
 Date d2 {my_bir thday}; // initialization by copy
 ```
+
+[![复制代码](http://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
+
+```
+1 /* Define NULL pointer value */
+2 #ifndef NULL
+3 #ifdef __cplusplus
+4 #define NULL    0
+5 #else  /* __cplusplus */
+6 #define NULL    ((void *)0)
+7 #endif  /* __cplusplus */
+8 #endif  /* NULL */
+```
+
+[![复制代码](http://common.cnblogs.com/images/copycode.gif)](javascript:void(0);)
+
+​    可以看出，在C中，NULL表示的是指向0的指针，而在C++中，NULL就直接跟0一样了。但有一点值得注意的是：在C语言中，“当常量0处于应该作为指针使用的上下文中时，它就作为空指针使用”（《征服C指针》）。例如，下边的指针定义和初始化是没问题的（即没警告也没报错）：
+
+```
+ int * p = 0;    /* C language */
+```
+
+​     但如果定义成如下的样子呢？
+
+```
+ int * p = 3;    /* C language */
+```
+
+　　很明显，这样子做是有问题的。这一句可以编译通过，但在VS 2013中有这样的警告：“warning C4047: “初始化”:“int *”与“int”的间接级别不同”。
+
+　　我又试了一下这一句在C++中的情况，VS 2013就直接报错了：“ ‘int’ 类型的值不能用于初始化 ‘int *’ 类型的实体”。
+
+　　因此，为了防止混淆，在C/C++中，当要将一个指针赋值为空指针的时候，都应该将它赋为NULL，而不是0。
+
+　　
+
+　　**2.** ‘\0’：‘\0’是一个“空字符”常量，它表示一个字符串的结束，它的ASCII码值为0。注意它与空格' '（ASCII码值为32）及'0'（ASCII码值为48）不一样的。
+
+　　在《征服C指针》中，作者还提到了一种错误的程序写法：使用NULL来结束字符串。例如下边的程序就是有问题的：
+
+```
+char str[4] = { '1', '2', '3', NULL };    /* C language */
+```
+
+　　在VS 2013中，会的这样的警告：“warning C4047: “初始化”:“char”与“void *”的间接级别不同”。而在C++中，这一句是没有问题的。
+
+　　还有一点值得注意，如下的程序在C/C++中都是没有问题的：
+
+```
+char str[4] = { '1', '2', '3', 0 };    / C/C++ language */
+```
+
+　　但为了防止混淆，在C/C++中，当要给一个字符串添加结束标志时，都应该用‘\0’而不是NULL或0。
+
+ 
+
+　　综上所述，当我们要置一个指针为空时，应该用NULL，当我们要给一个字符串添加结束标志时，应该用‘\0’。
 
 ## 2.2 构造函数
 
@@ -445,6 +557,89 @@ const FUN && const_rvalue_reference_to_fun = fun; // ok
 重载，是同一个类的两个函数
 
 override，是覆盖的意思，所以是子类与父类的关系
+
+# 3 IO
+
+分为字符文件读取和二进制文件读取
+
+## 3.1 字符读取
+
+| 区别   | fputc(char ch,FILE* fp)函数                           | fgetc(FILE* fp)函数                                   |
+| ------ | ----------------------------------------------------- | ----------------------------------------------------- |
+| 功能   | 将一个字符写入到文件中                                | 从文件中读出一个字符                                  |
+| 参数   | ch要写入的字符,fp指向FILE结构的指针                   | ch要写入的字符,fp指向FILE结构的指针                   |
+| 返回值 | 成功，返回该字符；遇到文件尾或读取错误时，返回EOF(-1) | 成功，返回该字符；遇到文件尾或读取错误时，返回EOF(-1) |
+
+当按下回车键时，在标准输入缓存中，会多一个<font color=red>回车键</font>。windows系统在进行文件操作时，会将这个回车键转化为两个字符<font color=red>回车和换行</font>再写入文件中，而linux系统不会。读出时相反。
+
+## 3.2 多字节读取
+
+| 区别   | char *fgets(char *str, int num, FILE *fp)                    | int fputs(char *str, file *fp) |
+| ------ | ------------------------------------------------------------ | ------------------------------ |
+| 功能   | 读取指定数量字符，若数量限制为１０个，但是中途遇到换行符或者EOF，则返回，最多读9个字符，最后一个'\\0'是自动加的。文件存的是回车换行符，fgets并不会获取回车符，我觉得应该是系统自己把回车换行换成了换行符，再给fgets处理。 | 写入字符串                     |
+| 参数   | str读到的字符存这里面，想要读取的字符个数，fp指向FILE结构的指针 | fp指向FILE结构的指针           |
+| 返回值 | 成功，str指针。否则NULL                                      | 成功，返回0。否则非0           |
+
+## 3.3 格式化输出到文件
+
+```c
+char * p = "abcdef";
+double fl = 3.2;
+int i = fprintf(stdout, "%5s\t%6.2f\n", p, fl);
+```
+## 3.4 fseek
+
+```c
+fseek(f, sizeof(int), SEEK_SET); 
+```
+
+读一个二进制文件，文件开始处偏移一个 int 型长度。
+
+## 3.5 二进制文件
+
+```c
+FILE * f;
+	int i;
+	people per[3];
+	char* p[] = { "li", "wang", "zhang" };
+	per[0].age = 20; strcpy_s(per[0].name, strlen(p[0]) + 1, p[0]);
+
+	per[1].age = 18; strcpy_s(per[1].name, strlen(p[1]) + 1, p[1]);
+
+	per[2].age = 21; strcpy_s(per[2].name, strlen(p[2]) + 2, p[2]);
+
+	errno_t err_t;
+	if ((err_t = fopen_s(&f, "1.txt", "wb+")) != 0)
+	{
+		printf("cant open the file");
+		exit(0);
+	}
+
+	for (i = 0; i < 3; i++)
+	{
+		if (fwrite(&per[i], sizeof(people), 1, f) != 1)
+			printf("file write error\n");
+	}
+
+	fseek(f, 0L, SEEK_SET);
+
+	people pp;
+	while (fread(&pp, sizeof(people), 1, f) == 1){
+		printf("%d %s\n", pp.age, pp.name);
+	}
+
+	system("pause");
+
+	fclose(f);
+```
+
+输出
+
+```c
+20 li
+18 wang
+21 zhang
+```
 
 
 
@@ -1510,7 +1705,37 @@ C 程序在链接生成可执行文件时，连接器会把一个启动例程链
 
 ## 5.3 中止处理函数
 
-由exit自动调用，可以使用ateit登记多达 32 个中止处理函数
+可以使用atexit登记多达 32 个中止处理函数。启动例程一般用<font color=red>汇编语言</font>编写，在main函数返回后执行。用 C 代码的形式是 exit( main(argc, argv) )，exit 会自动调用终止处理程序。
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+static void my_exit1();
+static void my_exit2();
+
+int main()
+{
+	if (atexit(my_exit1) != 0){
+		printf("can't register my_exit1!");
+	}
+
+	if (atexit(my_exit2) != 0){
+		printf("can't register my_exit2!");
+	}
+
+	printf("main is done!\n");
+	return 0;
+}
+
+static void my_exit1(){
+	printf("first exit handler\n");
+}
+
+static void my_exit2(){
+	printf("second exit handler\n");
+}
+```
 
 ## 5.4 命令行参数
 
@@ -1529,6 +1754,29 @@ int  main(int argc, char* argv[]){
 
 ISO  C 和UNIX 都规定， argv[argc] = null，就是多加了一个null在数组后边
 
+```c
+#include <stdio.h>
+
+int main(int argc, char* argv[])
+{
+	for (int i = 0; i < argc; ++i){
+		printf("%s\n", argv[i]);
+	}
+	return 0;
+}
+```
+
+输出，显然程序名也是一个参数
+
+```
+E:\work\VS_SPACE\project1\solution_study1\Debug>c1project.exe first second
+c1project.exe
+first
+second
+```
+
+
+
 ## 5.5 环境表
 
 ```c
@@ -1546,4 +1794,16 @@ int  main(int argc, char* argv[]){
 ```
 
 每个程序都有一张环境表，char** environ 是一个全局变量，getenv 和 putevn操作特定的变量。
+
+# 6 进程控制
+
+## 6.1 fork
+
+复制线程，环境不同
+
+## 6.2 vfork()
+
+创建线程，单环境共用。可以保证子线程先运行，直到子线程调用 exec 或者  exit 之后，父进程才能执行，在此之前，子进程域父进程共用一个空间。 
+
+# 7 信号
 
