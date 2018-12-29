@@ -426,3 +426,6 @@ resolveLazily：为true时，启用推迟文件解析，以便在UploadAction中
 log4j.appender.CONSOLE.layout.ConversionPattern =  %d{ABSOLUTE} %5p %c{1}:%L [%t:%r]- %m%n
 ```
 
+## 1.3 打包命令
+
+jar -cvfM0 catalog20181215.war ./catalog
