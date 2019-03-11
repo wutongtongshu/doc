@@ -733,6 +733,18 @@ oracle   28330 28275  0 May18 ?        00:00:00 [Xsession] <defunct>
 
 # 4. 网络管理
 
+## 4.2 网络连通性
+
+- ssh -v -p 3306 10.18.53.130  
+
+若成功，则显示：
+
+OpenSSH_5.3p1, OpenSSL 1.0.1e-fips 11 Feb 2013
+debug1: Reading configuration data /etc/ssh/ssh_config
+debug1: Applying options for *
+debug1: Connecting to 10.18.53.130 [10.18.53.130] port 3306.
+debug1: Connection established.
+
 ## 4.1 本机ip配置
 
 ### 4.1.1配置一张虚拟网卡
