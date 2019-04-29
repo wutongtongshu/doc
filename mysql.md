@@ -61,111 +61,41 @@ mysqladmin -u username -p ab12 password djg345
 
 ###1.4.1 新建用户
 
-- 登录MYSQL：
+1. 直接操作用户表，用户表字段很多，很难插入成功，不建议使用
 
-　　@>mysql -u root -p
+   ```sql
+   insert into mysql.user -- 直接操作 user 表，麻烦--
+   ```
 
-　　@>密码
+2. 使用 create 命令，创建用户 test1 和 test2，密码都是123456
 
-- 创建用户：
+   ```sql
+   create user `test1`@`172.22.3.160` identified by '123456';
+   create user `test2`@`%` identified by '123456';
+   
+   -- 将 name 和 host分开，但是 @ 要紧挨着 host--
+   create user test1 @localhost identified by '123456';
+   ```
 
-  1. 直接操作用户表，用户表字段很多，很难插入成功，不建议使用
+   @ 符号后面的 IP 指定了用户登陆的 IP，用户只能使用该指定 IP 来连接 Mysql 数据库。反撇号使 name 
 
-     mysql>   insert into mysql.user(user,host,password) values('mytest','localhost',password('1234'));
+   和 ip 可以区分，若不使用反撇号也可以使用引号，绝对不能啥也不加，这样 Mysql 会把他们看成是用户
 
-  2. 使用 create 命令，创建用户user和user1，密码都是123456
+   名，并且使用默认 IP —— %，这样用户登陆 IP 不受限制。
 
-     mysql> create user 'user'@'localhost' identified by "123456";
-
-     mysql> create user "user1"@"localhost" identified by '123456';
-
-注意：此处的"localhost"，是指该用户只能在本地登录，不能在另外一台机器上远程登录。如果想远程登录的话，将"localhost"改为"%"，表示在任何一台电脑上都可以登录。也可以指定某台机器可以远程登录。这里""跟''都是表示字符串的意思，都可以使用。
-
-   	  3.   GRANT <ALL|priv1,priv2,.....privn> ON object IDENTIFIED BY 'password'
-
-这个object是数据库对象，在对该对象授权时，如果指定的用户不存在，创建该用户并授权。
-
-说明：priv代表权限select,insert,update,delete,create,drop,index,alter,grant,references,reload,shutdown,process,file等14个权限
-
-例子：mysql>grant select,insert,update,delete,create,drop on test.hr to john@192.168.10.1 identified by '123';
-
-说明：给主机为192.168.10.1的用户john分配可对数据库test的hr表进行select,insert,update,delete,create,drop等操作的权限，并设定口令为123。
-
-mysql>grant all privileges on test.* to joe@192.168.10.1 identified by '123';
-
-说明：给主机为192.168.10.1的用户john分配可对数据库test所有表进行所有操作的权限，并设定口令为123。
-
-mysql>grant all privileges on *.* to john@192.168.10.1 identified by '123';
-
-说明：给主机为192.168.10.1的用户john分配可对所有数据库的所有表进行所有操作的权限，并设定口令为123。
-
-mysql>grant all privileges on *.* to john@localhost identified by '123';
-
-说明：用户john分配可对所有数据库的所有表进行所有操作的权限，并设定口令为123。
-
-查看权限：
-
-show grants for你的用户;
-
-show grants forroot@'localhost';
-
-show grants for webgametest@10.3.18.158;
-
-show createdatabase dbname;  这个可以看到创建数据库时用到的一些参数。
-
-showcreatetabletickets;    可以看到创建表时用到的一些参数
+   新创建的用户没有任何权限。
 
 ###1.4.2 为用户授权
 
-[“Grant Tables”](https://dev.mysql.com/doc/refman/5.7/en/grant-tables.html) 
+为用户授权 grant 命令，命令行输入 help grant 查看帮助
 
-　　授权格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by "密码";　
+```sql
+grant all privileges on test.* to test1 @localhost;
+```
 
-- 登录MYSQL（有ROOT权限），这里以ROOT身份登录：
+查看权限：
 
-　　@>mysql -u root -p
-
-　　@>密码
-
-- 首先为用户创建一个数据库(testDB)：
-
-　　mysql>create database testDB;
-
-- 授权test用户拥有testDB数据库的所有权限（某个数据库的所有权限）：
-
-　　 mysql>grant all privileges on testDB.* to test@localhost identified by '1234';
-
- 　　mysql>flush privileges;//刷新系统权限表
-
-　　格式：grant 权限 on 数据库.* to 用户名@登录主机 identified by "密码";　可以使用GRANT给用户添加权限，权限会自动叠加，不会覆盖之前授予的权限，比如你先给用户添加一个SELECT权限，后来又给用户添加了一个INSERT权限，那么该用户就同时拥有了SELECT和INSERT权限。 
-
-​	mysql> grant all privileges on *.* to 'yangxin'@'%' identified by 'yangxin123456' with grant option;	
-
-​		all privileges：表示将所有权限授予给用户。也可指定具体的权限，如：SELECT、CREATE、DROP等。
-
-​		on：表示这些权限对哪些数据库和表生效，格式：数据库名.表名，这里写“*”表示所有数据库，所有表。如果我要指定将权限应用到test库的user表中，可以这么写：test.user
-
-​		to：将权限授予哪个用户。格式：”用户名”@”登录IP或域名”。%表示没有限制，在任何主机都可以登录。比如：”yangxin”@”192.168.0.%”，表示yangxin这个用户只能在192.168.0IP段登录
-
-​		identified by：指定用户的登录密码
-
-​		with grant option：表示允许用户将自己的权限授权给其它用户
-
-如果想指定部分权限给一用户，可以这样来写:
-
-　　mysql>grant select,update on testDB.* to test@localhost identified by '1234';
-
-　　mysql>flush privileges; //刷新系统权限表
-
-**授权test用户拥有所有数据库的某些权限**
-
-　　mysql>grant select,delete,update,create,drop on *.* to test@"%" identified by "1234";
-
-     //test用户对所有数据库都有select,delete,update,create,drop 权限。
-
-　 //@"%" 表示对所有非本地主机授权，不包括localhost。（localhost地址设为127.0.0.1，如果设为真实的本地地址，不知道是否可以，没有验证。）
-
-　//对localhost授权：加上一句grant all privileges on testDB.* to test@localhost identified by '1234';即可。
+show grants for root@'localhost';
 
 ###1.4.3 删除用户
 
@@ -579,28 +509,3 @@ DECIMAL(M, N) 以字符串存放，占用 M + 2 个字节。M 表示位数，N �
 ## 4.1 delimiter
 
 在用命令行时，由于默认的delimiter是 分号 ; ，而 sql 语句的结束标志也是分号。这就导致命令行无法准确判断存储过程的结束位置，一般在使用命令行时都要重新设定delimiter。在脚本中不存在这种情况，不需要delimiter。 
-
-## 4.2 定义异常处理
-
-```sql
-DECLARE {CONTINUE | EXIT} HANDLER FOR
-{SQLSTATE sqlstate_code| MySQL error code| condition_name}
-handler_actions
-```
-
-# 4.3 错误码
-
-SQLSTATE和mysql error code是两套体系，之间由对应关系。SQLSTATE更通用
-
-## 4.4 mysql异常重命名
-
-```sql
-DECLARE condition_name CONDITION FOR {SQLSTATE sqlstate_code | MySQL_error_code};
-```
-
-## 4.5 singal
-
-```sql
-SIGNAL SQLSTATE sqlstate_code|condition_name [SET MESSAGE_TEXT=string_or_variable];
-```
-

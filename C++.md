@@ -249,6 +249,31 @@ inline int f(int i) { return i+1; }
 ## 1.11 引用
 
 引用和普通变量是严格区分的，引用赋值给普通变量是复制赋值。
+//返回值，会生成临时量来存储 temp
+//必须等函数调用语句结束后，临时量销毁
+float fn1(float r)
+{
+	temp = r*r*3.14;
+	return temp;
+}
+
+//返回引用，返回的是对 temp 的引用
+//不产生临时变量
+float& fn2(float r)
+{
+	temp = r*r*3.14;
+	return temp;
+}
+
+void main()
+{
+	float a=fn1(5.0);  //临时量赋值给a
+	float& b=fn1(5.0); //引用临时量
+	float c=fn2(5.0);  //引用赋值给c，安全
+	//引用一个变量的引用危险，万一这个变量是
+	//临时量，在这个语句执行后，临时量会被销毁
+	float& d=fn2(5.0); 
+}
 
 ## 1.12 空指针 0 \\0的问题
 
